@@ -317,7 +317,8 @@ def main():
     # Bugzilla, but only checks state consistency for selected issues
     if options.jira:
         done_states = set(("VERIFIED", "RELEASE_PENDING", "CLOSED"))
-        in_work_states = set(("ASSIGNED", "POST", "MODIFIED", "ON_QA"))
+        in_work_states = set(("ASSIGNED", "POST", "MODIFIED"))
+        testing_states = set(("ON_QA",))
         to_do_states = set(("NEW",))
 
         jira.retrieve_info()
@@ -357,23 +358,9 @@ def main():
             elif bz_status in in_work_states:
                 if issue.status != "In Progress":
                     problem(state_err)
-                # Check verification subtasks exist for ON_QA bugs
-                if bz_status == "ON_QA":
-                    verify_subtask = jira.get_bz_verification_subtask(bug)
-                    if verify_subtask is None:
-                        problem('Verification subtask for ON_QA BZ#%s '
-                                'missing in issue %s' %
-                                    (bz_link_ref, issue.id))
-                        if update_jira:
-                            prompt = ('  Add verification subtask to %s '
-                                      'for "%s"'
-                                          % (issue.id, issue.summary))
-                            if confirm(prompt):
-                                verify_subtask = (
-                                    jira.create_bz_verification_subtask(bug))
-                                print('    Created %s as a verification '
-                                                  'subtask' % verify_subtask)
-
+            elif bz_status in testing_states:
+                if issue.status != "Testing":
+                    problem(state_err)
             elif bz_status in done_states:
                 if issue.status != "Done":
                     problem(state_err)
