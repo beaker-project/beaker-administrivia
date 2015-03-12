@@ -26,10 +26,6 @@ from itertools import chain
 import simplejson as json
 from optparse import OptionParser
 import bugzilla # yum install python-bugzilla
-try:
-    from jirainfo import JiraInfo
-except ImportError:
-    JiraInfo = None
 
 # These are in Python 2.6
 def any(iterable):
@@ -238,21 +234,12 @@ build_git_revlist = _git_info.build_git_revlist
 #  - Bugzilla (bugzilla.redhat.com)
 #  - Gerrit (gerrit.beaker-project.org)
 #  - Git (local clone of git.beaker-project.org/beaker)
-#  - JIRA (internal task progress tracking)
-#
-# Soon:
-#  - JIRA/Agile (internal Scrum sprint tracking)
 
 # Release tracking
 #  - filters based on the release flag in Bugzilla
 #
 # Milestone tracking
 #  - filters based on the target milestone in Bugzilla
-#
-# Sprint tracking (BROKEN)
-#  - currently filters based on the devel whiteboard in Bugzilla which
-#    is no longer maintained
-#  - may eventually switch to filtering based on Greenhopper sprint status
 
 
 def main():
@@ -264,17 +251,6 @@ def main():
             help='Check bugs approved for RELEASE (using flags)')
     #parser.add_option('-s', '--sprint', metavar='SPRINT',
     #        help='Check bugs approved for SPRINT (using devel whiteboard)')
-    parser.add_option('-g', '--gerrit', action='store_true',
-            help='Check consistency between Bugzilla and Gerrit')
-    parser.add_option('-j', '--jira', action='store_true',
-            help='Check consistency between Bugzilla and JIRA (see '
-                 'jirainfo.py for configuration details)')
-    parser.add_option('--syncjirainfo', action='store_true',
-            help='Selectively adjust JIRA info based on BZ info '
-                 '(implies --jira)')
-    parser.add_option('--syncbzinfo', action='store_true',
-            help='Selectively adjust Bugzilla info based on JIRA info '
-                 '(implies --jira)')
     parser.add_option('-i', '--include', metavar='STATE', action="append",
             help='Include bugs in the specified state '
                  '(may be given multiple times)')
@@ -285,22 +261,10 @@ def main():
     options.sprint = None
     if not (options.milestone or options.release or options.sprint):
         parser.error('Specify a milestone, release or sprint')
-    if options.syncbzinfo or options.syncjirainfo:
-        options.jira = True
-    if not (options.gerrit or options.jira):
-        parser.error('Must check consistency with Gerrit, JIRA or both')
 
-    if options.jira:
-        if JiraInfo is None:
-            raise RuntimeError("Could not import jirainfo. Is the virtualenv active?")
-        if options.verbose:
-            print "Connecting to JIRA"
-        jira = JiraInfo("checkbugs", retrieve_info=False)
-
-    if options.gerrit:
-        if options.verbose:
-            print "Building git revision list for HEAD"
-        build_git_revlist()
+    if options.verbose:
+        print "Building git revision list for HEAD"
+    build_git_revlist()
     if options.verbose:
         print "Retrieving bug list from Bugzilla"
     bugs = get_bugs(options.milestone, options.release, options.sprint,
@@ -308,119 +272,12 @@ def main():
     bug_ids = set(bug.bug_id for bug in bugs)
     if options.verbose:
         print "  Retrieved %d bugs" % len(bugs)
-    if options.gerrit:
-        if options.verbose:
-            print "Retrieving code review details from Gerrit"
-        changes = get_gerrit_changes(bug_ids)
-        if options.verbose:
-            print "  Retrieved %d patch reviews" % len(changes)
-    else:
-        changes = ()
 
-    # Check consistency between JIRA and Bugzilla
-    # Always checks internal consistency of all issues that reference
-    # Bugzilla, but only checks state consistency for selected issues
-    if options.jira:
-        done_states = set(("VERIFIED", "RELEASE_PENDING", "CLOSED"))
-        in_work_states = set(("ASSIGNED", "POST", "MODIFIED"))
-        testing_states = set(("ON_QA",))
-        to_do_states = set(("NEW",))
-
-        jira.retrieve_info()
-        jira_bz_issues = list(jira.iter_bz_issues())
-        if options.verbose:
-            print ("  Retrieved %d issues with Bugzilla refs" %
-                                                          len(jira_bz_issues))
-        for issue in jira_bz_issues:
-            # Check internal consistency of BZ references
-            bz_summary_ref = issue.bz_summary_ref
-            bz_link_ref = issue.bz_link_ref
-            update_jira = options.syncjirainfo
-            update_bz = options.syncbzinfo
-            if bz_summary_ref is None:
-                problem('Issue %s summary is missing reference to BZ#%d' %
-                                (issue.id, bz_link_ref))
-                bz_ref = bz_link_ref
-            elif bz_link_ref is None:
-                problem('Issue %s is missing link to BZ#%d' %
-                                (issue.id, bz_summary_ref))
-            elif bz_summary_ref != bz_link_ref:
-                update_jira = update_bz = False
-                problem('Issue %s references BZ#%d in summary, '
-                        'but links to BZ#%d' %
-                        (issue.id, bz_summary_ref, bz_link_ref))
-            # Check full details only for linked bugs that meet the filter
-            if not bz_link_ref in bug_ids:
-                continue
-            # Check status consistency
-            bug = get_bug(bz_link_ref)
-            bz_status = bug.bug_status
-            state_err = ('Issue %s state %s does not match BZ#%s state %s' %
-                             (issue.id, issue.status, bz_link_ref, bz_status))
-            if bz_status in to_do_states:
-                if issue.status != "To Do":
-                    problem(state_err)
-            elif bz_status in in_work_states:
-                if issue.status != "In Progress":
-                    problem(state_err)
-            elif bz_status in testing_states:
-                if issue.status != "Testing":
-                    problem(state_err)
-            elif bz_status in done_states:
-                if issue.status != "Done":
-                    problem(state_err)
-            else:
-                problem('Issue %s tracks BZ#%s in unknown state %s' %
-                             (issue.id, bz_link_ref, bz_status))
-            # Check description starts with an appropriate link
-            if bug.weburl not in issue.description:
-                problem('Issue %s tracks BZ#%d but description does not '
-                        'contain the corresponding link' %
-                        (issue.id, bz_link_ref))
-                if update_jira:
-                    prompt = "  Insert link into %r" % issue.description
-                    if confirm(prompt):
-                        neat_link = "[BZ#%s|%s] " % (bz_link_ref, bug.weburl)
-                        new_description = neat_link + issue.description
-                        jira.update_description(issue, new_description)
-            # Check story points are set if estimated hours are set
-            points = issue.story_points
-            hours = float(bug.estimated_time)
-            if hours and points is None:
-                problem('Issue %s story points not set for '
-                        'BZ#%d with estimated hours to first patch (%s) ' %
-                        (issue.id, bz_link_ref, hours))
-                if update_jira:
-                    prompt = "  Set story points to %s" % hours
-                    if confirm(prompt):
-                        jira.update_story_points(issue, hours)
-            # Check 1.0 release flag is set appropriately
-            if (not options.release and
-                    not bz_info.is_acked_for_release(bz_link_ref, "1.0")):
-                problem('Issue %s tracks BZ#%d but Beaker 1.0 release flag '
-                        'is not set' %
-                        (issue.id, bz_link_ref))
-                if update_bz:
-                    prompt = "  Set Beaker 1.0 release flag?"
-                    if confirm(prompt):
-                        bz_info.ack_for_release(bz_link_ref, "1.0")
-            # Check target milestone matches fix version
-            version = issue.target_version
-            milestone = bug.target_milestone
-            bz_version = jira.get_target_version(milestone)
-            if bz_version != version:
-                problem('Issue %s target version (%s) does not match '
-                        'BZ#%d target milestone (%s) ' %
-                        (issue.id, version, bz_link_ref, milestone))
-                if update_jira and milestone != "---":
-                    prompt = "  Set target version to %s" % bz_version
-                    if confirm(prompt):
-                        jira.update_target_version(issue, bz_version)
-                if update_bz:
-                    prompt = "  Set target milestone to %s?" % version
-                    if confirm(prompt):
-                        bz_info.set_target_milestone(bz_link_ref, version)
-
+    if options.verbose:
+        print "Retrieving code review details from Gerrit"
+    changes = get_gerrit_changes(bug_ids)
+    if options.verbose:
+        print "  Retrieved %d patch reviews" % len(changes)
 
     # Consistency check on all bugs in the specified sprint, release or
     # milestone
@@ -443,33 +300,32 @@ def main():
                         abbrev_user(change['owner']['email']), change['url'])
 
         # check for patch state inconsistencies
-        if options.gerrit:
-            if bug.bug_status in ('NEW', 'ASSIGNED') and \
-                    any(change['status'] != 'ABANDONED' for change in bug_changes):
-                if all(change['status'] == 'MERGED' for change in bug_changes):
-                    problem('Bug %s should be MODIFIED, not %s' % (bug.bug_id, bug.bug_status))
-                else:
-                    problem('Bug %s should be POST, not %s' % (bug.bug_id, bug.bug_status))
-            elif bug.bug_status == 'POST' and \
-                    not any(change['status'] == 'NEW' for change in bug_changes):
-                if bug_changes and all(change['status'] == 'MERGED' for change in bug_changes):
-                    problem('Bug %s should be MODIFIED, not %s' % (bug.bug_id, bug.bug_status))
-                else:
-                    problem('Bug %s should be ASSIGNED, not %s' % (bug.bug_id, bug.bug_status))
-            elif bug.bug_status in ('MODIFIED', 'ON_DEV', 'ON_QA', 'VERIFIED', 'RELEASE_PENDING', 'CLOSED'):
-                if bug.bug_status == 'CLOSED' and bug.resolution == 'DUPLICATE':
-                    if bug.dupe_of not in bug_ids:
-                        dupe = get_bug(bug.dupe_of)
-                        if dupe.bug_status != 'CLOSED':
-                            for target_kind in "release", "milestone", "sprint":
-                                if getattr(options, target_kind, False):
-                                    break
-                            problem('Bug %s marked as DUPLICATE of %s, which is not in this %s'
-                                                    % (bug.bug_id, bug.dupe_of, target_kind))
-                elif bug.bug_status == 'MODIFIED' and not bug_changes:
-                    problem('Bug %s should be ASSIGNED, not %s' % (bug.bug_id, bug.bug_status))
-                elif not all(change['status'] in ('ABANDONED', 'MERGED') for change in bug_changes):
-                    problem('Bug %s should be POST, not %s' % (bug.bug_id, bug.bug_status))
+        if bug.bug_status in ('NEW', 'ASSIGNED') and \
+                any(change['status'] != 'ABANDONED' for change in bug_changes):
+            if all(change['status'] == 'MERGED' for change in bug_changes):
+                problem('Bug %s should be MODIFIED, not %s' % (bug.bug_id, bug.bug_status))
+            else:
+                problem('Bug %s should be POST, not %s' % (bug.bug_id, bug.bug_status))
+        elif bug.bug_status == 'POST' and \
+                not any(change['status'] == 'NEW' for change in bug_changes):
+            if bug_changes and all(change['status'] == 'MERGED' for change in bug_changes):
+                problem('Bug %s should be MODIFIED, not %s' % (bug.bug_id, bug.bug_status))
+            else:
+                problem('Bug %s should be ASSIGNED, not %s' % (bug.bug_id, bug.bug_status))
+        elif bug.bug_status in ('MODIFIED', 'ON_DEV', 'ON_QA', 'VERIFIED', 'RELEASE_PENDING', 'CLOSED'):
+            if bug.bug_status == 'CLOSED' and bug.resolution == 'DUPLICATE':
+                if bug.dupe_of not in bug_ids:
+                    dupe = get_bug(bug.dupe_of)
+                    if dupe.bug_status != 'CLOSED':
+                        for target_kind in "release", "milestone", "sprint":
+                            if getattr(options, target_kind, False):
+                                break
+                        problem('Bug %s marked as DUPLICATE of %s, which is not in this %s'
+                                                % (bug.bug_id, bug.dupe_of, target_kind))
+            elif bug.bug_status == 'MODIFIED' and not bug_changes:
+                problem('Bug %s should be ASSIGNED, not %s' % (bug.bug_id, bug.bug_status))
+            elif not all(change['status'] in ('ABANDONED', 'MERGED') for change in bug_changes):
+                problem('Bug %s should be POST, not %s' % (bug.bug_id, bug.bug_status))
 
         # Check for release/milestone inconsistencies
         if options.release:
@@ -504,13 +360,6 @@ def main():
                 if not git_commit_reachable(sha):
                     problem('Bug %s: Commit %s is not reachable from HEAD '
                             ' (is this clone up to date?)' % (bug.bug_id, sha))
-
-        # Ensure any still open issues are listed in the JIRA backlog
-        if options.jira and bug.bug_status != 'CLOSED':
-            try:
-                issue = jira.get_bz_issue(bug.bug_id)
-            except KeyError:
-                problem('BZ#%s not found in JIRA' % (bug.bug_id,))
 
         if options.verbose:
             print
