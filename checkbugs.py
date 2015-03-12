@@ -102,7 +102,8 @@ class BugzillaInfo(object):
     def _get_release_flag(self, release):
         return 'Beaker-%s' % release
 
-    def get_bugs(self, milestone, release, sprint, states):
+    def get_bugs(self, milestone=None, release=None, sprint=None, states=None,
+            assignee=None):
         bz = self.get_bz_proxy()
         criteria = {'product': 'Beaker'}
         if milestone:
@@ -113,6 +114,8 @@ class BugzillaInfo(object):
             criteria['flag'] = [self._get_release_flag(release) + '+']
         if states:
             criteria['status'] = list(states)
+        if assignee:
+            criteria['assigned_to'] = assignee
         bugs = bz.query(bz.build_query(**criteria))
         for bug in bugs:
             self._bz_cache[bug.bug_id] = bug
@@ -130,9 +133,11 @@ class BugzillaInfo(object):
             bug = self._bz_cache[bug_id] = result[0]
             return bug
 
-    def set_target_milestone(self, bug_id, target_milestone):
+    def set_target_milestone(self, bug_id, target_milestone, nomail=False):
         bz = self.get_bz_proxy()
         updates = bz.build_update(target_milestone=target_milestone)
+        if nomail:
+            updates['nomail'] = 1
         bz.update_bugs([bug_id], updates)
 
     def is_acked_for_release(self, bug_id, release):
