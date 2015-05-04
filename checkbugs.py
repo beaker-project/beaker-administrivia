@@ -136,6 +136,13 @@ class BugzillaInfo(object):
             updates['nomail'] = 1
         bz.update_bugs([bug_id], updates)
 
+    def set_resolution(self, bug_id, resolution, nomail=False):
+        bz = self.get_bz_proxy()
+        updates = bz.build_update(resolution=resolution)
+        if nomail:
+            updates['nomail'] = 1
+        bz.update_bugs([bug_id], updates)
+
     def is_acked_for_release(self, bug_id, release):
         bug = self.get_bug(bug_id)
         flag = self._get_release_flag(release)
