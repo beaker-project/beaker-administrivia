@@ -304,7 +304,7 @@ def main():
             if options.verbose:
                 print '    Change %-6s %-17s %-10s <%s>' % (change['number'],
                         '%s (%d/%d)' % (change['status'], verified, reviewed),
-                        abbrev_user(change['owner']['email']), change['url'])
+                        change['owner']['username'], change['url'])
 
         # check for patch state inconsistencies
         if bug.bug_status in ('NEW', 'ASSIGNED') and \
