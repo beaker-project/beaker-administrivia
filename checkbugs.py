@@ -95,19 +95,11 @@ class BugzillaInfo(object):
                 raise RuntimeError('Invalid BZ credentials, try running "bugzilla login"')
         return self._bz
 
-    def _get_release_flag(self, release):
-        return 'Beaker-%s' % release
-
-    def get_bugs(self, milestone=None, release=None, sprint=None, states=None,
-            assignee=None):
+    def get_bugs(self, milestone=None, states=None, assignee=None):
         bz = self.get_bz_proxy()
         criteria = {'product': 'Beaker'}
         if milestone:
             criteria['target_milestone'] = milestone
-        if sprint:
-            criteria['devel_whiteboard'] = sprint
-        if release:
-            criteria['flag'] = [self._get_release_flag(release) + '+']
         if states:
             criteria['status'] = list(states)
         if assignee:
@@ -142,16 +134,6 @@ class BugzillaInfo(object):
         if nomail:
             updates['nomail'] = 1
         bz.update_bugs([bug_id], updates)
-
-    def is_acked_for_release(self, bug_id, release):
-        bug = self.get_bug(bug_id)
-        flag = self._get_release_flag(release)
-        return bug.get_flag_status(flag) == "+"
-
-    def ack_for_release(self, bug_id, release):
-        bz = self.get_bz_proxy()
-        flag = self._get_release_flag(release)
-        bz.update_flags([bug_id], [{"name": flag, "status": "+"}])
 
 # Simple module level API for the default Bugzilla URL
 bz_info = BugzillaInfo()
@@ -241,9 +223,6 @@ build_git_revlist = _git_info.build_git_revlist
 #  - Bugzilla (bugzilla.redhat.com)
 #  - Gerrit (gerrit.beaker-project.org)
 #  - Git (local clone of git.beaker-project.org/beaker)
-
-# Release tracking
-#  - filters based on the release flag in Bugzilla
 #
 # Milestone tracking
 #  - filters based on the target milestone in Bugzilla
@@ -254,10 +233,6 @@ def main():
             description='Reports on the state of Beaker bugs for a given milestone')
     parser.add_option('-m', '--milestone', metavar='MILESTONE',
             help='Check bugs slated for MILESTONE')
-    parser.add_option('-r', '--release', metavar='RELEASE',
-            help='Check bugs approved for RELEASE (using flags)')
-    #parser.add_option('-s', '--sprint', metavar='SPRINT',
-    #        help='Check bugs approved for SPRINT (using devel whiteboard)')
     parser.add_option('-i', '--include', metavar='STATE', action="append",
             help='Include bugs in the specified state '
                  '(may be given multiple times)')
@@ -266,16 +241,15 @@ def main():
             help='Only display problem reports')
     options, args = parser.parse_args()
     options.sprint = None
-    if not (options.milestone or options.release or options.sprint):
-        parser.error('Specify a milestone, release or sprint')
+    if not options.milestone:
+        parser.error('Specify a milestone')
 
     if options.verbose:
         print "Building git revision list for HEAD"
     build_git_revlist()
     if options.verbose:
         print "Retrieving bug list from Bugzilla"
-    bugs = get_bugs(options.milestone, options.release, options.sprint,
-                    options.include)
+    bugs = get_bugs(milestone=options.milestone, states=options.include)
     bug_ids = set(bug.bug_id for bug in bugs)
     if options.verbose:
         print "  Retrieved %d bugs" % len(bugs)
@@ -286,8 +260,7 @@ def main():
     if options.verbose:
         print "  Retrieved %d patch reviews" % len(changes)
 
-    # Consistency check on all bugs in the specified sprint, release or
-    # milestone
+    # Consistency check on all bugs in the specified milestone
     for bug in bugs:
         if options.verbose:
             print 'Bug %-13d %-17s %-10s <%s>' % (bug.bug_id, bug.bug_status,
@@ -328,32 +301,6 @@ def main():
             elif not all(change['status'] in ('ABANDONED', 'MERGED') for change in bug_changes):
                 problem('Bug %s should be POST, not %s' % (bug.bug_id, bug.bug_status))
 
-        # Check for release/milestone inconsistencies
-        if options.release:
-            if options.release == "1.0":
-                # All currently completed work for 1.0 should target 0.x
-                if (not bug.target_milestone.startswith("0.") and
-                    bug.target_milestone != "HOTFIX" and
-                    (bug.bug_status in ('VERIFIED', 'RELEASE_PENDING')
-                     or (bug.bug_status == 'CLOSED' and
-                         bug.resolution == 'CURRENTRELEASE'))):
-                    problem('Bug %s target milestone should be set earlier than %s' %
-                                    (bug.bug_id, options.release))
-            # Other checks for bugs not merely allocated to the release
-            if bug.target_milestone != options.release:
-                if bug.target_milestone == "---":
-                    problem('Bug %s target milestone should be set to %s or earlier' %
-                                (bug.bug_id, options.release))
-                elif (bug.target_milestone == "HOTFIX" and
-                    bug.get_flag_status("hot_fix") == "+"):
-                    pass
-                elif (bug.target_milestone.split('.')[0] >=
-                    options.release.split('.')[0]):
-                    # If the milestone doesn't match the release flag, it should
-                    # refer to an earlier major version
-                    problem('Bug %s target milestone should be %s or earlier, not %s' %
-                                    (bug.bug_id, options.release, bug.target_milestone))
-
         # Check merge consistency
         for change in bug_changes:
             if change['status'] == 'MERGED' and change['project'] == 'beaker':
@@ -364,17 +311,6 @@ def main():
 
         if options.verbose:
             print
-
-    # Check for bugs already on the upstream "want list" awaiting approval
-    if options.release:
-        if options.verbose:
-            print "Checking release and milestone consistency"
-        # check for target milestone set without the appropriate release flag
-        target_bugs = get_bugs(options.release, None, None, options.include)
-        approved_bug_ids = set(b.bug_id for b in bugs)
-        for unapproved in [b for b in target_bugs if b.bug_id not in approved_bug_ids]:
-            problem('Bug %s target milestone is set, but bug is not approved' %
-                            (unapproved.bug_id,))
 
     # Check for bugs with a missing milestone setting
     if not options.include:
