@@ -21,6 +21,7 @@ GERRIT_SSH_PORT = 29418
 
 import sys
 import os
+import re
 import subprocess
 from itertools import chain
 import simplejson as json
@@ -209,10 +210,24 @@ class GitInfo(object):
     def git_commit_reachable(self, sha):
         return sha in self._revlist
 
+    _bug_footer_pattern = re.compile(r'Bug:.*?(\d+)', re.I)
+    def bugs_referenced_in_commits(self):
+        """
+        Returns a list of bug IDs mentioned in all commits from master to HEAD.
+        """
+        messages = self._git_call('log', '--pretty=%B', 'master..HEAD')
+        bug_ids = []
+        for line in messages.splitlines():
+            m = self._bug_footer_pattern.search(line)
+            if m:
+                bug_ids.append(int(m.group(1)))
+        return bug_ids
+
 # Simple module level API for a git repo in the current working dir
 _git_info = GitInfo()
 git_commit_reachable = _git_info.git_commit_reachable
 build_git_revlist = _git_info.build_git_revlist
+bugs_referenced_in_commits = _git_info.bugs_referenced_in_commits
 
 
 ################################################
@@ -311,6 +326,15 @@ def main():
 
         if options.verbose:
             print
+
+    # Check for commits which reference a bug not in this milestone
+    if not options.include:
+        if options.verbose:
+            print "Checking commit bug references for consistency"
+        for referenced_bug_id in bugs_referenced_in_commits():
+            if referenced_bug_id not in bug_ids:
+                problem('Bug %s is referenced by a commit on this branch '
+                        'but target milestone is not set' % referenced_bug_id)
 
     # Check for bugs with a missing milestone setting
     if not options.include:
