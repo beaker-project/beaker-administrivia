@@ -388,14 +388,12 @@ def main():
             print "Checking milestone and bug status consistency"
         # In progress bugs should always have a milestone
         _in_work_states = [
-            'ASSIGNED',
-            'POST',
             'MODIFIED',
             'ON_QA',
             'VERIFIED',
             'RELEASE_PENDING',
         ]
-        in_work_bugs = get_bugs("---", None, None, _in_work_states)
+        in_work_bugs = get_bugs(milestone=['---', 'future_maint'], states=_in_work_states)
         for no_milestone in in_work_bugs:
             problem('Bug %s status is %s but target milestone is not set' %
                             (no_milestone.bug_id, no_milestone.bug_status))
