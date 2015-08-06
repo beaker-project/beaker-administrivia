@@ -321,14 +321,8 @@ def main():
                 problem('Bug %s should be ASSIGNED, not %s' % (bug.bug_id, bug.bug_status))
         elif bug.bug_status in ('MODIFIED', 'ON_DEV', 'ON_QA', 'VERIFIED', 'RELEASE_PENDING', 'CLOSED'):
             if bug.bug_status == 'CLOSED' and bug.resolution == 'DUPLICATE':
-                if bug.dupe_of not in bug_ids:
-                    dupe = get_bug(bug.dupe_of)
-                    if dupe.bug_status != 'CLOSED':
-                        for target_kind in "release", "milestone", "sprint":
-                            if getattr(options, target_kind, False):
-                                break
-                        problem('Bug %s marked as DUPLICATE of %s, which is not in this %s'
-                                                % (bug.bug_id, bug.dupe_of, target_kind))
+                # beaker_dupe_clear Bugzilla rule actually does this for us
+                problem('Bug %s should have no milestone since it is marked DUPLICATE' % bug.bug_id)
             elif bug.bug_status == 'MODIFIED' and not bug_changes:
                 problem('Bug %s should be ASSIGNED, not %s' % (bug.bug_id, bug.bug_status))
             elif not all(change['status'] in ('ABANDONED', 'MERGED') for change in bug_changes):
