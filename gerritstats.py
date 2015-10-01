@@ -74,9 +74,10 @@ def page(table):
       </head>
       <body>
         <div id="chart" style="width: 1400px; height: 800px;"></div>
+	<p>Generated %s</p>
       </body>
     </html>
-    """ % JSONEncoderWithDate().encode(table)
+    """ % (JSONEncoderWithDate().encode(table), datetime.datetime.utcnow().isoformat() + 'Z')
 
 def main():
     response = requests.get(GERRIT_CHANGES_URL)
