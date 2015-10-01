@@ -28,7 +28,7 @@ def stats(changes):
                     for message in change['messages']
                     if message['_revision_number'] == revision['_number']
                         and 'author' in message
-                        and message['author']['_account_id'] != change['owner']['_account_id']
+                        and message['author']['_account_id'] != revision['uploader']['_account_id']
                         and message['author'].get('username') not in NON_HUMAN_REVIEWERS]
             if not review_times:
                 continue
