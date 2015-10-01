@@ -5,7 +5,7 @@ import json
 import requests
 
 GERRIT_CHANGES_URL = 'http://gerrit.beaker-project.org/changes/?q=project:beaker&o=ALL_REVISIONS&o=MESSAGES&o=DETAILED_ACCOUNTS&n=500'
-NON_HUMAN_REVIEWERS = ['jenkins']
+NON_HUMAN_REVIEWERS = ['patchbot', 'jenkins']
 POSTED_SINCE = datetime.datetime.utcnow() - datetime.timedelta(days=365)
 
 def parse_gerrit_timestamp(timestamp):
