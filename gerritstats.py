@@ -6,9 +6,20 @@ import datetime
 import json
 import requests
 
+# using businesstime from a submodule for now, since it needs Dan's fork for 
+# Qld public holidays
+import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'businesstime'))
+from businesstime import BusinessTime
+from businesstime.australia import BrisbanePublicHolidays
+
 GERRIT_CHANGES_URL = 'http://gerrit.beaker-project.org/changes/?q=project:beaker&o=ALL_REVISIONS&o=MESSAGES&o=DETAILED_ACCOUNTS&n=500'
 NON_HUMAN_REVIEWERS = ['patchbot', 'jenkins']
 POSTED_SINCE = datetime.datetime.utcnow() - datetime.timedelta(days=365)
+
+tzoffset = datetime.timedelta(hours=10) # our business hours are in UTC+10
+business_time = BusinessTime(
+        business_hours=(datetime.time(6), datetime.time(18)),
+        holidays=BrisbanePublicHolidays())
 
 def parse_gerrit_timestamp(timestamp):
     # "2015-09-08 04:39:30.493000000"
@@ -30,8 +41,11 @@ def stats(changes):
                         and message['author'].get('username') not in NON_HUMAN_REVIEWERS]
             if not review_times:
                 continue
-            time_to_first_review = min(review_times) - posted_time
-            days_to_first_review = time_to_first_review.total_seconds() / (24*60*60)
+            time_to_first_review = business_time.businesstimedelta(
+                    posted_time + tzoffset,
+                    min(review_times) + tzoffset)
+            days_to_first_review = (time_to_first_review.days +
+                    (float(time_to_first_review.seconds) / business_time.open_hours.seconds))
             rows.append(rowtype(posted_time, days_to_first_review, revision, change))
     rows = sorted(rows, key=lambda r: r.posted_time)
     # compute centred exponential weighted mean and variance for each point except the edge-most ones
@@ -124,6 +138,7 @@ def page(table):
       <body>
         <div id="chart" style="width: 1400px; height: 800px;"></div>
         <p>Line shows rolling weighted average, with 1 std. dev. interval</p>
+        <p>Days are business days in Brisbane, Australia (UTC+10) excluding weekends and holidays</p>
 	<p>Generated %s</p>
       </body>
     </html>
