@@ -10,7 +10,7 @@ import requests
 # Qld public holidays
 import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'businesstime'))
 from businesstime import BusinessTime
-from businesstime.australia import BrisbanePublicHolidays
+from businesstime.holidays.aus import BrisbanePublicHolidays
 
 GERRIT_CHANGES_URL = 'http://gerrit.beaker-project.org/changes/?q=project:beaker&o=ALL_REVISIONS&o=MESSAGES&o=DETAILED_ACCOUNTS&n=500'
 NON_HUMAN_REVIEWERS = ['patchbot', 'jenkins']
