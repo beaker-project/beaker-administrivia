@@ -12,6 +12,12 @@ import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'busi
 from businesstime import BusinessTime
 from businesstime.holidays.aus import BrisbanePublicHolidays
 
+class RedHatBrisbaneHolidays(BrisbanePublicHolidays):
+    holidays = BrisbanePublicHolidays.holidays + [
+        # 2015-2016 Christmas company holidays
+        datetime.date(2015, 12, 24), datetime.date(2015, 12, 29), datetime.date(2015, 12, 30), datetime.date(2015, 12, 31),
+    ]
+
 GERRIT_CHANGES_URL = 'http://gerrit.beaker-project.org/changes/?q=project:beaker&o=ALL_REVISIONS&o=MESSAGES&o=DETAILED_ACCOUNTS&n=500'
 NON_HUMAN_REVIEWERS = ['patchbot', 'jenkins']
 POSTED_SINCE = datetime.datetime.utcnow() - datetime.timedelta(days=365)
@@ -19,7 +25,7 @@ POSTED_SINCE = datetime.datetime.utcnow() - datetime.timedelta(days=365)
 tzoffset = datetime.timedelta(hours=10) # our business hours are in UTC+10
 business_time = BusinessTime(
         business_hours=(datetime.time(6), datetime.time(18)),
-        holidays=BrisbanePublicHolidays())
+        holidays=RedHatBrisbaneHolidays())
 
 def parse_gerrit_timestamp(timestamp):
     # "2015-09-08 04:39:30.493000000"
