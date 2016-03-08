@@ -40,7 +40,9 @@ koji -p beakerkoji add-tag beaker-harness-fedora-$REL-testing --parent beaker-ha
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL-redhat --parent beaker-harness-fedora-$REL
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL-redhat-testing --parent beaker-harness-fedora-$REL-testing --parent beaker-harness-fedora-$REL
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL-build --parent beaker-harness-fedora-$REL --arches=i686,x86_64
+koji -p beakerkoji add-target beaker-harness-fedora-$REL beaker-harness-fedora-$REL-build beaker-harness-fedora-$REL
 koji -p beakerkoji add-target beaker-harness-fedora-$REL-testing beaker-harness-fedora-$REL-build beaker-harness-fedora-$REL-testing
+koji -p beakerkoji add-target beaker-harness-fedora-$REL-redhat beaker-harness-fedora-$REL-build beaker-harness-fedora-$REL-redhat
 koji -p beakerkoji add-target beaker-harness-fedora-$REL-redhat-testing beaker-harness-fedora-$REL-build beaker-harness-fedora-$REL-redhat-testing
 koji -p beakerkoji add-group beaker-harness-fedora-$REL-build build
 koji -p beakerkoji add-group-pkg beaker-harness-fedora-$REL-build build bash bzip2 coreutils cpio diffutils fedora-release findutils gawk gcc gcc-c++ grep gzip info make patch redhat-rpm-config rpm-build sed shadow-utils tar unzip util-linux which xz
