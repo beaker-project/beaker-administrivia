@@ -28,7 +28,7 @@ koji -p beakerkoji add-target beaker-client-fedora-$REL-redhat-testing beaker-cl
 koji -p beakerkoji add-group beaker-client-fedora-$REL-build build
 koji -p beakerkoji add-group-pkg beaker-client-fedora-$REL-build build bash bzip2 coreutils cpio diffutils fedora-release findutils gawk gcc gcc-c++ grep gzip info make patch redhat-rpm-config rpm-build sed shadow-utils tar unzip util-linux which xz
 koji -p beakerkoji add-group beaker-client-fedora-$REL-build srpm-build
-koji -p beakerkoji add-group-pkg beaker-client-fedora-$REL-build srpm-build bash fedora-release git redhat-rpm-config rhpkg-simple rpm-build shadow-utils
+koji -p beakerkoji add-group-pkg beaker-client-fedora-$REL-build srpm-build bash fedora-release git redhat-rpm-config rhpkg-simple fedpkg-minimal rpm-build shadow-utils
 koji -p beakerkoji add-external-repo --tag beaker-client-fedora-$REL-build $EXTERNAL_REPO_NAME
 koji -p beakerkoji add-pkg --owner=$USER beaker-client-fedora-$REL beaker rhts
 koji -p beakerkoji add-pkg --owner=$USER beaker-client-fedora-$REL-redhat beaker-redhat beaker-redhat-repo beakerlib-redhat
@@ -47,7 +47,7 @@ koji -p beakerkoji add-target beaker-harness-fedora-$REL-redhat-testing beaker-h
 koji -p beakerkoji add-group beaker-harness-fedora-$REL-build build
 koji -p beakerkoji add-group-pkg beaker-harness-fedora-$REL-build build bash bzip2 coreutils cpio diffutils fedora-release findutils gawk gcc gcc-c++ grep gzip info make patch redhat-rpm-config rpm-build sed shadow-utils tar unzip util-linux which xz
 koji -p beakerkoji add-group beaker-harness-fedora-$REL-build srpm-build
-koji -p beakerkoji add-group-pkg beaker-harness-fedora-$REL-build srpm-build bash fedora-release git redhat-rpm-config rhpkg-simple rpm-build shadow-utils
+koji -p beakerkoji add-group-pkg beaker-harness-fedora-$REL-build srpm-build bash fedora-release git redhat-rpm-config rhpkg-simple fedpkg-minimal rpm-build shadow-utils
 koji -p beakerkoji add-external-repo --tag beaker-harness-fedora-$REL-build $EXTERNAL_REPO_NAME
 koji -p beakerkoji add-pkg --owner=$USER beaker-harness-fedora-$REL beah rhts lshw beaker-system-scan restraint staf
 koji -p beakerkoji add-pkg --owner=$USER beaker-harness-fedora-$REL-redhat beakerlib-redhat
@@ -61,7 +61,7 @@ koji -p beakerkoji add-target beaker-server-fedora-$REL-testing beaker-server-fe
 koji -p beakerkoji add-group beaker-server-fedora-$REL-build build
 koji -p beakerkoji add-group-pkg beaker-server-fedora-$REL-build build bash bzip2 coreutils cpio diffutils fedora-release findutils gawk gcc gcc-c++ grep gzip info make patch redhat-rpm-config rpm-build sed shadow-utils tar unzip util-linux which xz
 koji -p beakerkoji add-group beaker-server-fedora-$REL-build srpm-build
-koji -p beakerkoji add-group-pkg beaker-server-fedora-$REL-build srpm-build bash fedora-release git redhat-rpm-config rhpkg-simple rpm-build shadow-utils
+koji -p beakerkoji add-group-pkg beaker-server-fedora-$REL-build srpm-build bash fedora-release git redhat-rpm-config rhpkg-simple fedpkg-minimal rpm-build shadow-utils
 koji -p beakerkoji add-external-repo --tag beaker-server-fedora-$REL-build $EXTERNAL_REPO_NAME
 koji -p beakerkoji add-pkg --owner=$USER beaker-server-fedora-$REL beaker
 koji -p beakerkoji add-pkg --owner=$USER beaker-server-fedora-$REL-build rhpkg-simple
