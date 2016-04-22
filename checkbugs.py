@@ -49,7 +49,10 @@ def abbrev_user(user):
     if user.endswith('@redhat.com'):
         return user[:-len('@redhat.com')]
 
+problems_found = False
 def problem(message):
+    global problems_found
+    problems_found = True
     if os.isatty(sys.stdout.fileno()):
         print '\033[1m\033[91m** %s\033[0m' % message
     else:
@@ -408,3 +411,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    sys.exit(1 if problems_found else 0)
