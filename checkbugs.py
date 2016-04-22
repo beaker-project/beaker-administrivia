@@ -73,6 +73,11 @@ def increment_minor(version):
     major, minor = [int(piece) for piece in version.split('.')]
     return '%s.%s' % (major, minor + 1)
 
+def vercmp(left, right):
+    return cmp(
+            [int(piece) for piece in left.split('.')],
+            [int(piece) for piece in right.split('.')])
+
 ################################################
 # Bugzilla access
 ################################################
@@ -370,8 +375,19 @@ def main():
             print "Checking commit bug references for consistency"
         for referenced_bug_id in bugs_referenced_in_commits():
             if referenced_bug_id not in bug_ids:
-                problem('Bug %s is referenced by a commit on this branch '
-                        'but target milestone is not set' % referenced_bug_id)
+                referenced_bug = get_bug(referenced_bug_id)
+                # We have found a patch referencing a bug which is not in our 
+                # milestone. It could be a merge/cherry-pick of a bug which is 
+                # already fixed in some release, or on the maintenance branch: 
+                # those are not a problem.
+                # Only raise the alarm if the referenced bug's milestone is 
+                # newer or not set.
+                if (referenced_bug.target_milestone == '---' or
+                        referenced_bug.target_milestone == 'future_maint' or
+                        vercmp(referenced_bug.target_milestone, options.milestone) > 0):
+                    problem('Bug %s is referenced by a commit on this branch '
+                            'but target milestone is %s'
+                            % (referenced_bug.bug_id, referenced_bug.target_milestone))
 
     # Check for bugs with a missing milestone setting
     if not options.include:
