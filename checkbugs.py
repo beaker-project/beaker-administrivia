@@ -59,6 +59,21 @@ def confirm(prompt):
     return raw_input(prompt + " (y/N)?:").lower().startswith('y')
 
 ################################################
+# Version numbering helpers
+################################################
+
+# Historically Beaker's version numbers have not been so simple/regular, but 
+# these days they are always 'x.y' where x and y are integers.
+
+def increment_major(version):
+    major, minor = [int(piece) for piece in version.split('.')]
+    return '%s.%s' % (major + 1, 0)
+
+def increment_minor(version):
+    major, minor = [int(piece) for piece in version.split('.')]
+    return '%s.%s' % (major, minor + 1)
+
+################################################
 # Bugzilla access
 ################################################
 
@@ -223,11 +238,21 @@ class GitInfo(object):
                 bug_ids.append(int(m.group(1)))
         return bug_ids
 
+    def current_git_branch(self):
+        return self._git_call('rev-parse', '--abbrev-ref', 'HEAD').strip()
+
+    def current_version(self):
+        tag = self._git_call('describe', '--abbrev=0', 'HEAD').strip()
+        assert tag.startswith('beaker-')
+        return tag[len('beaker-'):]
+
 # Simple module level API for a git repo in the current working dir
 _git_info = GitInfo()
 git_commit_reachable = _git_info.git_commit_reachable
 build_git_revlist = _git_info.build_git_revlist
 bugs_referenced_in_commits = _git_info.bugs_referenced_in_commits
+current_git_branch = _git_info.current_git_branch
+current_version = _git_info.current_version
 
 
 ################################################
@@ -242,12 +267,24 @@ bugs_referenced_in_commits = _git_info.bugs_referenced_in_commits
 # Milestone tracking
 #  - filters based on the target milestone in Bugzilla
 
+def get_default_milestone():
+    # Figure out what milestone we are interested based on the version 
+    # currently checked out.
+    # If we are on a release branch, we are working on x.y+1 (for example, 
+    # release-22 branch with version 22.3 means we are interested in 22.4).
+    # For all other branches, including develop, we are working on x+1.0 (for 
+    # example, develop branch with version 22.3 means we are interested in 
+    # 23.0).
+    if current_git_branch().startswith('release-'):
+        return increment_minor(current_version())
+    else:
+        return increment_major(current_version())
 
 def main():
     parser = OptionParser('usage: %prog [options]',
             description='Reports on the state of Beaker bugs for a given milestone')
     parser.add_option('-m', '--milestone', metavar='MILESTONE',
-            help='Check bugs slated for MILESTONE')
+            help='Check bugs slated for MILESTONE [default: guess from current checkout]')
     parser.add_option('-i', '--include', metavar='STATE', action="append",
             help='Include bugs in the specified state '
                  '(may be given multiple times)')
@@ -255,9 +292,9 @@ def main():
             dest="verbose", default=True,
             help='Only display problem reports')
     options, args = parser.parse_args()
-    options.sprint = None
     if not options.milestone:
-        parser.error('Specify a milestone')
+        options.milestone = get_default_milestone()
+        print "Using milestone %s" % options.milestone
 
     if options.verbose:
         print "Building git revision list for HEAD"
