@@ -288,6 +288,17 @@ def get_default_milestone():
     else:
         return increment_major(current_version())
 
+# These are the names of long-lived feature branches which are abandoned and/or 
+# rebased and/or cherry-picked. That is, these are *not expected* to be merged 
+# into HEAD.
+# This is important because if we find a Gerrit patch set which was destined 
+# for one of these branches, we *won't* complain if the commit is not 
+# reachable, because it's not expected to be.
+abandoned_feature_branches = [
+    'results-reporting-improvements',
+    'results-reporting-improvements-take2',
+]
+
 def main():
     parser = OptionParser('usage: %prog [options]',
             description='Reports on the state of Beaker bugs for a given milestone')
@@ -363,7 +374,8 @@ def main():
 
         # Check merge consistency
         for change in bug_changes:
-            if change['status'] == 'MERGED' and change['project'] == 'beaker':
+            if change['status'] == 'MERGED' and change['project'] == 'beaker' and \
+                    change['branch'] not in abandoned_feature_branches:
                 sha = change['currentPatchSet']['revision']
                 if not git_commit_reachable(sha):
                     problem('Bug %s: Commit %s is not reachable from HEAD '
