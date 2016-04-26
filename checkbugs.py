@@ -238,7 +238,7 @@ class GitInfo(object):
         """
         Returns a list of bug IDs mentioned in all commits from master to HEAD.
         """
-        messages = self._git_call('log', '--pretty=%B', 'master..HEAD')
+        messages = self._git_call('log', '--pretty=%B', 'origin/master..HEAD')
         bug_ids = []
         for line in messages.splitlines():
             m = self._bug_footer_pattern.search(line)
