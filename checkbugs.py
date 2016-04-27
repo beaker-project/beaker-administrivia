@@ -342,9 +342,9 @@ def main():
         for change in sorted(bug_changes, key=lambda c: int(c['number'])):
             patch_set = change['currentPatchSet']
             verified = max(chain([None], (int(a['value'])
-                    for a in patch_set.get('approvals', []) if a['type'] == 'VRIF'))) or 0
+                    for a in patch_set.get('approvals', []) if a['type'] == 'Verified'))) or 0
             reviewed = max(chain([None], (int(a['value'])
-                    for a in patch_set.get('approvals', []) if a['type'] == 'CRVW'))) or 0
+                    for a in patch_set.get('approvals', []) if a['type'] == 'Code-Review'))) or 0
             if options.verbose:
                 print '    Change %-6s %-17s %-10s <%s>' % (change['number'],
                         '%s (%d/%d)' % (change['status'], verified, reviewed),
