@@ -351,26 +351,26 @@ def main():
                         change['owner']['username'], change['url'])
 
         # check for patch state inconsistencies
-        if bug.bug_status in ('NEW', 'ASSIGNED') and \
-                any(change['status'] != 'ABANDONED' for change in bug_changes):
-            if all(change['status'] == 'MERGED' for change in bug_changes):
-                problem('Bug %s should be MODIFIED, not %s' % (bug.bug_id, bug.bug_status))
-            else:
-                problem('Bug %s should be POST, not %s' % (bug.bug_id, bug.bug_status))
-        elif bug.bug_status == 'POST' and \
-                not any(change['status'] == 'NEW' for change in bug_changes):
-            if bug_changes and all(change['status'] == 'MERGED' for change in bug_changes):
-                problem('Bug %s should be MODIFIED, not %s' % (bug.bug_id, bug.bug_status))
-            else:
-                problem('Bug %s should be ASSIGNED, not %s' % (bug.bug_id, bug.bug_status))
-        elif bug.bug_status in ('MODIFIED', 'ON_DEV', 'ON_QA', 'VERIFIED', 'RELEASE_PENDING', 'CLOSED'):
-            if bug.bug_status == 'CLOSED' and bug.resolution == 'DUPLICATE':
-                # beaker_dupe_clear Bugzilla rule actually does this for us
-                problem('Bug %s should have no milestone since it is marked DUPLICATE' % bug.bug_id)
-            elif bug.bug_status == 'MODIFIED' and not bug_changes:
-                problem('Bug %s should be ASSIGNED, not %s' % (bug.bug_id, bug.bug_status))
-            elif not all(change['status'] in ('ABANDONED', 'MERGED') for change in bug_changes):
-                problem('Bug %s should be POST, not %s' % (bug.bug_id, bug.bug_status))
+        unabandoned_bug_changes = [change for change in bug_changes
+                if change['status'] != 'ABANDONED']
+        if not unabandoned_bug_changes:
+            # No patches exist, or they're all abandoned.
+            # We accept closed states here because the bug might have been 
+            # fixed by something other than a Beaker patch (like a beah patch, etc).
+            acceptable_bug_states = ['NEW', 'ASSIGNED', 'ON_QA', 'VERIFIED', 'CLOSED']
+        elif any(change['status'] != 'MERGED' for change in unabandoned_bug_changes):
+            # Some patches are undergoing review.
+            acceptable_bug_states = ['ASSIGNED', 'POST']
+        else:
+            # Patches exist and they are all merged.
+            acceptable_bug_states = ['MODIFIED', 'ON_QA', 'VERIFIED', 'CLOSED']
+        if bug.bug_status not in acceptable_bug_states:
+            problem('Bug %s should be %s, not %s'
+                    % (bug.bug_id, ' or '.join(acceptable_bug_states), bug.bug_status))
+
+        if bug.bug_status == 'CLOSED' and bug.resolution == 'DUPLICATE':
+            # beaker_dupe_clear Bugzilla rule actually does this for us
+            problem('Bug %s should have no milestone since it is marked DUPLICATE' % bug.bug_id)
 
         # Check merge consistency
         for change in bug_changes:
