@@ -247,8 +247,10 @@ class GitInfo(object):
         return bug_ids
 
     def current_git_branch(self):
-        remote_ref_name = self._git_call('name-rev', '--refs=remotes/origin/*', '--name-only', 'HEAD').strip()
-        return remote_ref_name.split('/', 1)[1]
+        remote_ref_name = self._git_call('name-rev', '--refs=refs/remotes/origin/*', '--name-only', 'HEAD').strip()
+        # Output will be either 'remotes/origin/release-22' or 
+        # 'origin/release-22' depending on git version...
+        return remote_ref_name.split('/')[-1]
 
     def current_version(self):
         tag = self._git_call('describe', '--abbrev=0', 'HEAD').strip()
