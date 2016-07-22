@@ -30,7 +30,7 @@ def parse_beaker_duration(duration_text):
     return datetime.timedelta(seconds=(int(hours) * 3600 + int(minutes) * 60 + int(seconds)))
 
 def stats():
-    rowtype = namedtuple('Row', ['timestamp', 'hours_ran', 'recipeid', 'hostname'])
+    rowtype = namedtuple('Row', ['timestamp', 'hours_ran', 'recipeid', 'hostgroup', 'hostname'])
     rows = []
     for jobnum in os.listdir(DOGFOOD_RESULTS_BASEDIR):
         jobdir = os.path.join(DOGFOOD_RESULTS_BASEDIR, jobnum)
@@ -42,7 +42,7 @@ def stats():
             continue
         hostname = re.search(r'Hostname      : (.*)$', open(logs_containing_hostname[0]).read(), re.M).group(1)
         hostname = hostname.split('.')[0]
-        hostname = hostname_to_group(hostname) # Not really a hostname anymore but oh well
+        hostgroup = hostname_to_group(hostname)
         results = lxml.etree.parse(open(os.path.join(resultsdir, 'results.xml'), 'rb'))
         recipeid, = results.xpath('/job/recipeSet/recipe/@id')
         duration_text, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/dogfood"]/@duration')
@@ -53,14 +53,14 @@ def stats():
             continue
         # This is not great, but we don't have finish_time in results.xml
         timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(resultsdir))
-        rows.append(rowtype(timestamp, hours_ran, recipeid, hostname))
+        rows.append(rowtype(timestamp, hours_ran, recipeid, hostgroup, hostname))
     rows = sorted(rows, key=lambda r: r.timestamp)
-    all_hostnames = sorted(set(row.hostname for row in rows))
+    all_hostgroups = sorted(set(row.hostgroup for row in rows))
     averages_by_row = {}
     upper_variances_by_row = {}
     lower_variances_by_row = {}
-    for hostname in all_hostnames:
-        hostrows = [row for row in rows if row.hostname == hostname]
+    for hostgroup in all_hostgroups:
+        hostrows = [row for row in rows if row.hostgroup == hostgroup]
         # compute centred exponential weighted mean and variance for each point except the edge-most ones
         # http://tdunning.blogspot.com.au/2011/03/exponential-weighted-averages-with.html
         # http://nfs-uxsup.csx.cam.ac.uk/~fanf2/hermes/doc/antiforgery/stats.pdf
@@ -90,11 +90,11 @@ def stats():
         {'id': 'hours_ran', 'type': 'number'},
         {'id': 'tooltip', 'type': 'string', 'role': 'tooltip'},
     ]
-    for hostname in all_hostnames:
+    for hostgroup in all_hostgroups:
         google_cols.extend([
-            {'id': 'hours_ran_rolling_avg_%s' % hostname, 'type': 'number', 'label': hostname},
-            {'id': 'hours_ran_interval_high_%s' % hostname, 'type': 'number', 'role': 'interval'},
-            {'id': 'hours_ran_interval_low_%s' % hostname, 'type': 'number', 'role': 'interval'},
+            {'id': 'hours_ran_rolling_avg_%s' % hostgroup, 'type': 'number', 'label': hostgroup},
+            {'id': 'hours_ran_interval_high_%s' % hostgroup, 'type': 'number', 'role': 'interval'},
+            {'id': 'hours_ran_interval_low_%s' % hostgroup, 'type': 'number', 'role': 'interval'},
         ])
     google_rows = []
     for row in rows:
@@ -103,8 +103,8 @@ def stats():
             {'v': row.hours_ran},
             {'v': 'R:%s on %s' % (row.recipeid, row.hostname)},
         ]
-        for hostname in all_hostnames:
-            if row.hostname != hostname or row not in averages_by_row:
+        for hostgroup in all_hostgroups:
+            if row.hostgroup != hostgroup or row not in averages_by_row:
                 google_row.extend([
                     {'v': None},
                     {'v': None},
