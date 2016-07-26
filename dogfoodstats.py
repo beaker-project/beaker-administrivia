@@ -9,7 +9,15 @@ import json
 import re
 import lxml.etree
 
-DOGFOOD_RESULTS_BASEDIR = '/srv/www/jenkins-results/beaker-review-checks-dogfood-RedHatEnterpriseLinux6'
+def dogfood_job_dirs():
+    el6dir = '/srv/www/jenkins-results/beaker-review-checks-dogfood-RedHatEnterpriseLinux6'
+    for jobnum in os.listdir(el6dir):
+        yield os.path.join(el6dir, jobnum)
+    el7dir = '/srv/www/jenkins-results/beaker-review-checks-dogfood-RedHatEnterpriseLinux7'
+    for jobnum in os.listdir(el7dir):
+        if int(jobnum) < 49:
+            continue # builds before #49 were busted
+        yield os.path.join(el7dir, jobnum)
 
 def hostname_to_group(hostname):
     """
@@ -32,8 +40,7 @@ def parse_beaker_duration(duration_text):
 def stats():
     rowtype = namedtuple('Row', ['timestamp', 'hours_ran', 'recipeid', 'hostgroup', 'hostname'])
     rows = []
-    for jobnum in os.listdir(DOGFOOD_RESULTS_BASEDIR):
-        jobdir = os.path.join(DOGFOOD_RESULTS_BASEDIR, jobnum)
+    for jobdir in dogfood_job_dirs():
         if not os.path.exists(os.path.join(jobdir, 'beaker')):
             continue
         resultsdir, = glob(os.path.join(jobdir, 'beaker', 'J:*'))
