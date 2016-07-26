@@ -52,6 +52,12 @@ def stats():
         hostgroup = hostname_to_group(hostname)
         results = lxml.etree.parse(open(os.path.join(resultsdir, 'results.xml'), 'rb'))
         recipeid, = results.xpath('/job/recipeSet/recipe/@id')
+        whiteboard, = results.xpath('/job/whiteboard/text()')
+        if 'use pytest' in whiteboard:
+            continue # this patch broke tests for unknown reason
+        setup_result, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/setup"]/@result')
+        if setup_result != 'Pass':
+            continue # tests are likely invalid
         duration_text, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/dogfood"]/@duration')
         duration = parse_beaker_duration(duration_text)
         hours_ran = duration.total_seconds() / 3600.
