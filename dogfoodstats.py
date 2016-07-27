@@ -19,6 +19,21 @@ def dogfood_job_dirs():
             continue # builds before #49 were busted
         yield os.path.join(el7dir, jobnum)
 
+invalid_recipe_ids = [ # These are excluded from the stats to avoid skewing them
+    # Xvfb was broken, skipping all WebDriver cases
+    '14468',
+    '14469',
+    '14470',
+    '14471',
+    '14472',
+    '14473',
+    '14474',
+    '14476',
+    '14480',
+    # pytest patch broke the tests for an unknown reason
+    '13652',
+]
+
 def hostname_to_group(hostname):
     """
     Some hosts are basically identical so we group them together to make the
@@ -52,18 +67,14 @@ def stats():
         hostgroup = hostname_to_group(hostname)
         results = lxml.etree.parse(open(os.path.join(resultsdir, 'results.xml'), 'rb'))
         recipeid, = results.xpath('/job/recipeSet/recipe/@id')
-        whiteboard, = results.xpath('/job/whiteboard/text()')
-        if 'use pytest' in whiteboard:
-            continue # this patch broke tests for unknown reason
+        if recipeid in invalid_recipe_ids:
+            continue
         setup_result, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/setup"]/@result')
         if setup_result != 'Pass':
             continue # tests are likely invalid
         duration_text, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/dogfood"]/@duration')
         duration = parse_beaker_duration(duration_text)
         hours_ran = duration.total_seconds() / 3600.
-        if hours_ran < 1.5:
-            # Not likely that it ran any tests
-            continue
         # This is not great, but we don't have finish_time in results.xml
         timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(resultsdir))
         rows.append(rowtype(timestamp, hours_ran, recipeid, hostgroup, hostname))
