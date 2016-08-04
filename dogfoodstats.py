@@ -91,7 +91,7 @@ def stats():
         # compute centred exponential weighted mean and variance for each point except the edge-most ones
         # http://tdunning.blogspot.com.au/2011/03/exponential-weighted-averages-with.html
         # http://nfs-uxsup.csx.cam.ac.uk/~fanf2/hermes/doc/antiforgery/stats.pdf
-        alpha = 3 # smoothing factor
+        alpha = 5 # smoothing factor
         for i, row in enumerate(hostrows):
             if i < 3 or i > len(hostrows) - 3:
                 continue
