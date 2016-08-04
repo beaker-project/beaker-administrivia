@@ -69,6 +69,9 @@ def stats():
         recipeid, = results.xpath('/job/recipeSet/recipe/@id')
         if recipeid in invalid_recipe_ids:
             continue
+        family, = results.xpath('/job/recipeSet/recipe/@family')
+        family = family.replace('RedHatEnterpriseLinux', 'RHEL')
+        hostgroup = '%s[%s]' % (hostgroup, family)
         setup_result, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/setup"]/@result')
         if setup_result != 'Pass':
             continue # tests are likely invalid
