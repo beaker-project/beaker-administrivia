@@ -55,4 +55,9 @@ for tag in tags:
                     build['version'],
                     build['release'],
                     build['tag_name'])
+                print '    koji -p beakerkoji untag-pkg %s %s-%s-%s' % (
+                    tag,
+                    testing_build['package_name'],
+                    testing_build['version'],
+                    testing_build['release'])
                 break
