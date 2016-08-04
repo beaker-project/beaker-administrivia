@@ -63,6 +63,6 @@ koji -p beakerkoji add-group-pkg beaker-server-fedora-$REL-build build bash bzip
 koji -p beakerkoji add-group beaker-server-fedora-$REL-build srpm-build
 koji -p beakerkoji add-group-pkg beaker-server-fedora-$REL-build srpm-build bash fedora-release git redhat-rpm-config rhpkg-simple fedpkg-minimal rpm-build shadow-utils
 koji -p beakerkoji add-external-repo --tag beaker-server-fedora-$REL-build $EXTERNAL_REPO_NAME
-koji -p beakerkoji add-pkg --owner=$USER beaker-server-fedora-$REL beaker
+koji -p beakerkoji add-pkg --owner=$USER beaker-server-fedora-$REL beaker python-tgexpandingformwidget
 koji -p beakerkoji add-pkg --owner=$USER beaker-server-fedora-$REL-build rhpkg-simple
 koji -p beakerkoji tag-pkg --nowait beaker-server-fedora-$REL-build rhpkg-simple-1.8-1.el7
