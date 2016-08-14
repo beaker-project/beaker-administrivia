@@ -32,6 +32,8 @@ invalid_recipe_ids = [ # These are excluded from the stats to avoid skewing them
     '14480',
     # pytest patch broke the tests for an unknown reason
     '13652',
+    # tests hung for unknown reason, hit LWD
+    '15355',
 ]
 
 def hostname_to_group(hostname):
