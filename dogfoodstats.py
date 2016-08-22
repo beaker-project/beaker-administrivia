@@ -74,6 +74,9 @@ def stats():
         family, = results.xpath('/job/recipeSet/recipe/@family')
         family = family.replace('RedHatEnterpriseLinux', 'RHEL')
         hostgroup = '%s[%s]' % (hostgroup, family)
+        recipe_status, = results.xpath('/job/recipeSet/recipe/@status')
+        if recipe_status != 'Completed':
+            continue
         setup_result, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/setup"]/@result')
         if setup_result != 'Pass':
             continue # tests are likely invalid
