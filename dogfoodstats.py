@@ -47,6 +47,9 @@ def hostname_to_group(hostname):
     if hostname in ['ibm-x3250m4-18', 'ibm-x3250m4-19']:
         # Two identical machines
         return 'ibm-x3250m4-*'
+    if hostname in ['hp-dl120gen9-06', 'hp-dl160gen9-04']:
+        # These two are not identical but their performance is
+        return 'hp-dl*gen9-*'
     return hostname
 
 def parse_beaker_duration(duration_text):
