@@ -34,6 +34,15 @@ invalid_recipe_ids = [ # These are excluded from the stats to avoid skewing them
     '13652',
     # tests hung for unknown reason, hit LWD
     '15355',
+    # LWD due to wrong value of BEAKER_SERVER_BASE_URL
+    '16081',
+    '16084',
+    '16085',
+    '16088',
+    '16089',
+    '16090',
+    '16091',
+    '16097',
 ]
 
 def hostname_to_group(hostname):
