@@ -98,7 +98,7 @@ known_issues = [
 
 def all_weeks():
     """
-    When showing stats, we show number of occurences per week starting from
+    When showing stats, we show number of occurrences per week starting from
     2016-W14 (earliest jobs we have) to the present. This returns a generator
     over all ISO weeks in that period.
     """
@@ -110,7 +110,7 @@ def all_weeks():
 
 def stats():
     all_jobs = []
-    known_issue_occurences = {known_issue: [] for known_issue in known_issues}
+    known_issue_occurrences = {known_issue: [] for known_issue in known_issues}
     for jobdir in dogfood_job_dirs():
         if not os.path.exists(os.path.join(jobdir, 'beaker')):
             continue
@@ -125,23 +125,23 @@ def stats():
         timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(resultsdir))
         for known_issue in known_issues:
             if testsuite_logs and known_issue.matches_nose_output(testsuite_logs[0]):
-                known_issue_occurences[known_issue].append(timestamp)
+                known_issue_occurrences[known_issue].append(timestamp)
             if console_logs and known_issue.matches_console_output(console_logs[0]):
-                known_issue_occurences[known_issue].append(timestamp)
+                known_issue_occurrences[known_issue].append(timestamp)
         all_jobs.append(timestamp)
-    return known_issue_occurences, all_jobs
+    return known_issue_occurrences, all_jobs
 
-def known_issue_summary(known_issue, occurences):
+def known_issue_summary(known_issue, occurrences):
     if known_issue.bug_id:
         heading = '<h2>%s (<a href="https://bugzilla.redhat.com/show_bug.cgi?id=%s">bug %s</a>)</h2>' \
                 % (known_issue.description, known_issue.bug_id, known_issue.bug_id)
     else:
         heading = '<h2>%s</h2>' % known_issue.description
-    occurences_by_week = Counter()
-    for occurence in occurences:
-        year, isoweek, weekday = occurence.isocalendar()
-        occurences_by_week[(year, isoweek)] += 1
-    table = [['Week', 'Frequency']] + [['%s-W%s' % week, occurences_by_week[week]] for week in all_weeks()]
+    occurrences_by_week = Counter()
+    for occurrence in occurrences:
+        year, isoweek, weekday = occurrence.isocalendar()
+        occurrences_by_week[(year, isoweek)] += 1
+    table = [['Week', 'Frequency']] + [['%s-W%s' % week, occurrences_by_week[week]] for week in all_weeks()]
     return """
     <section>
         %s
@@ -159,17 +159,17 @@ def known_issue_summary(known_issue, occurences):
     </section>
     """ % (heading, id(known_issue), json.dumps(table), id(known_issue))
 
-def all_issues_summary(occurences, all_jobs):
+def all_issues_summary(occurrences, all_jobs):
     jobs_by_week = Counter()
     for job in all_jobs:
         year, isoweek, weekday = job.isocalendar()
         jobs_by_week[(year, isoweek)] += 1
-    occurences_by_week = Counter()
-    for occurence in occurences:
-        year, isoweek, weekday = occurence.isocalendar()
-        occurences_by_week[(year, isoweek)] += 1
+    occurrences_by_week = Counter()
+    for occurrence in occurrences:
+        year, isoweek, weekday = occurrence.isocalendar()
+        occurrences_by_week[(year, isoweek)] += 1
     table = [['Week', 'Affected Jobs', 'Total Jobs']] + \
-            [['%s-W%s' % week, occurences_by_week[week], jobs_by_week[week]]
+            [['%s-W%s' % week, occurrences_by_week[week], jobs_by_week[week]]
              for week in all_weeks()]
     return """
     <section>
@@ -187,11 +187,11 @@ def all_issues_summary(occurences, all_jobs):
     </section>
     """ % json.dumps(table)
 
-def page(known_issue_occurences, all_jobs):
-    summaries = [known_issue_summary(known_issue, occurences)
-            for known_issue, occurences
-            in sorted(known_issue_occurences.iteritems(), key=lambda (k, o): o[-1], reverse=True)]
-    all_summary = all_issues_summary(sum(known_issue_occurences.values(), []), all_jobs)
+def page(known_issue_occurrences, all_jobs):
+    summaries = [known_issue_summary(known_issue, occurrences)
+            for known_issue, occurrences
+            in sorted(known_issue_occurrences.iteritems(), key=lambda (k, o): o[-1], reverse=True)]
+    all_summary = all_issues_summary(sum(known_issue_occurrences.values(), []), all_jobs)
     return """
     <html>
       <head>
