@@ -21,18 +21,31 @@ def dogfood_job_dirs():
 
 class KnownIssue(object):
 
-    def __init__(self, description, bug_id=None, failure_patterns=None):
+    def __init__(self, description, bug_id=None, failure_patterns=None, console_patterns=None):
         self.description = description
         self.bug_id = bug_id
         self.failure_patterns = [re.compile(patt, re.DOTALL)
                 for patt in (failure_patterns or [])]
+        self.console_patterns = [re.compile(patt, re.DOTALL)
+                for patt in (console_patterns or [])]
 
     def matches_nose_output(self, filename):
+        if not self.failure_patterns:
+            return False
         failures = re.split(r'={70}\n|-{70}\nRan ', open(filename).read())[1:-1]
         for failure in failures:
             for failure_pattern in self.failure_patterns:
                 if failure_pattern.search(failure):
                     return True
+        return False
+
+    def matches_console_output(self, filename):
+        if not self.console_patterns:
+            return False
+        console = open(filename).read()
+        for console_pattern in self.console_patterns:
+            if console_pattern.search(console):
+                return True
         return False
 
 known_issues = [
@@ -43,6 +56,14 @@ known_issues = [
     KnownIssue(
         description='WebDriver Connection refused',
         failure_patterns=[r'webdriver\.Firefox\(.*create_connection.*Connection refused'],
+    ),
+    KnownIssue(
+        description='/boot corrupted',
+        console_patterns=[
+            r'error: not a correct XFS inode\.',
+            r'error: attempt to read or write outside of partition\.',
+            r'error: file `.*\.mod\' not found\.',
+        ],
     ),
     KnownIssue(
         # fixed in d3f70b5947b6927460ebed0a580fa2efe9bfd746
@@ -97,16 +118,14 @@ def stats():
         recipe_status, = results.xpath('/job/recipeSet/recipe/@status')
         if recipe_status not in ['Completed', 'Aborted']:
             continue
-        setup_result, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/setup"]/@result')
-        if setup_result != 'Pass':
-            continue
         testsuite_logs = glob(os.path.join(resultsdir, '*-test_log--distribution-beaker-dogfood-tests.log'))
-        if not testsuite_logs:
-            continue
+        console_logs = glob(os.path.join(resultsdir, '*-console.log'))
         # This is not great, but we don't have finish_time in results.xml
         timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(resultsdir))
         for known_issue in known_issues:
-            if known_issue.matches_nose_output(testsuite_logs[0]):
+            if testsuite_logs and known_issue.matches_nose_output(testsuite_logs[0]):
+                known_issue_occurences[known_issue].append(timestamp)
+            if console_logs and known_issue.matches_console_output(console_logs[0]):
                 known_issue_occurences[known_issue].append(timestamp)
     return known_issue_occurences
 
