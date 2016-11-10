@@ -109,6 +109,7 @@ def all_weeks():
         d += datetime.timedelta(days=7)
 
 def stats():
+    all_jobs = []
     known_issue_occurences = {known_issue: [] for known_issue in known_issues}
     for jobdir in dogfood_job_dirs():
         if not os.path.exists(os.path.join(jobdir, 'beaker')):
@@ -127,7 +128,8 @@ def stats():
                 known_issue_occurences[known_issue].append(timestamp)
             if console_logs and known_issue.matches_console_output(console_logs[0]):
                 known_issue_occurences[known_issue].append(timestamp)
-    return known_issue_occurences
+        all_jobs.append(timestamp)
+    return known_issue_occurences, all_jobs
 
 def known_issue_summary(known_issue, occurences):
     if known_issue.bug_id:
@@ -157,21 +159,26 @@ def known_issue_summary(known_issue, occurences):
     </section>
     """ % (heading, id(known_issue), json.dumps(table), id(known_issue))
 
-def all_issues_summary(occurences):
+def all_issues_summary(occurences, all_jobs):
+    jobs_by_week = Counter()
+    for job in all_jobs:
+        year, isoweek, weekday = job.isocalendar()
+        jobs_by_week[(year, isoweek)] += 1
     occurences_by_week = Counter()
     for occurence in occurences:
         year, isoweek, weekday = occurence.isocalendar()
         occurences_by_week[(year, isoweek)] += 1
-    table = [['Week', 'Frequency']] + [['%s-W%s' % week, occurences_by_week[week]] for week in all_weeks()]
+    table = [['Week', 'Affected Jobs', 'Total Jobs']] + \
+            [['%s-W%s' % week, occurences_by_week[week], jobs_by_week[week]]
+             for week in all_weeks()]
     return """
     <section>
         <h2>All known issues</h2>
-        <div id="all-issues-chart" class="issue-chart" />
+        <div id="all-issues-chart" />
         <script>
             google.charts.setOnLoadCallback(function () {
                 var data = google.visualization.arrayToDataTable(%s);
                 var options = {
-                    legend: {position: 'none'},
                 };
                 var chart = new google.charts.Line(document.getElementById('all-issues-chart'));
                 chart.draw(data, options);
@@ -180,11 +187,11 @@ def all_issues_summary(occurences):
     </section>
     """ % json.dumps(table)
 
-def page(known_issue_occurences):
+def page(known_issue_occurences, all_jobs):
     summaries = [known_issue_summary(known_issue, occurences)
             for known_issue, occurences
             in sorted(known_issue_occurences.iteritems(), key=lambda (k, o): o[-1], reverse=True)]
-    all_summary = all_issues_summary(sum(known_issue_occurences.values(), []))
+    all_summary = all_issues_summary(sum(known_issue_occurences.values(), []), all_jobs)
     return """
     <html>
       <head>
@@ -195,6 +202,7 @@ def page(known_issue_occurences):
         </script>
         <style>
             .issue-chart { width: 1200px; height: 200px; }
+            #all-issues-chart { width: 1350px; height: 300px; }
         </style>
       </head>
       <body>
@@ -206,7 +214,7 @@ def page(known_issue_occurences):
     """ % (all_summary, '\n'.join(summaries), datetime.datetime.utcnow().isoformat() + 'Z')
 
 def main():
-    print page(stats())
+    print page(*stats())
 
 if __name__ == '__main__':
     main()
