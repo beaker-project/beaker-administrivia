@@ -62,6 +62,7 @@ known_issues = [
         console_patterns=[
             r'error: not a correct XFS inode\.',
             r'error: attempt to read or write outside of partition\.',
+            r'alloc magic is broken at 0x',
             r'error: file `.*\.mod\' not found\.',
         ],
     ),
