@@ -43,6 +43,8 @@ invalid_recipe_ids = [ # These are excluded from the stats to avoid skewing them
     '16090',
     '16091',
     '16097',
+    # reservesys skewed the recipe duration very high
+    '17382',
 ]
 
 def hostname_to_group(hostname):
