@@ -95,6 +95,10 @@ known_issues = [
         description='race condition in test_html_in_comments_is_escaped',
         failure_patterns=[r'test_html_in_comments_is_escaped.*AssertionError: u\'\' != \'<script>alert\("xss"\)</script>\''],
     ),
+    KnownIssue(
+        description='timeout in test_quiescent_period_only_applies_between_power_commands is too aggressive',
+        failure_patterns=[r'test_quiescent_period_only_applies_between_power_commands.*wait_for_command_to_finish\(commands\[1\]'],
+    ),
 ]
 
 def all_weeks():
