@@ -16,6 +16,8 @@ class RedHatBrisbaneHolidays(BrisbanePublicHolidays):
     holidays = BrisbanePublicHolidays.holidays + [
         # 2015-2016 Christmas company holidays
         datetime.date(2015, 12, 24), datetime.date(2015, 12, 29), datetime.date(2015, 12, 30), datetime.date(2015, 12, 31),
+        # 2016-2017 Christmas company holidays
+        datetime.date(2016, 12, 23), datetime.date(2016, 12, 28), datetime.date(2016, 12, 29), datetime.date(2016, 12, 30),
     ]
 
 GERRIT_CHANGES_URL = 'http://gerrit.beaker-project.org/changes/?q=project:beaker&o=ALL_REVISIONS&o=MESSAGES&o=DETAILED_ACCOUNTS&n=500'
