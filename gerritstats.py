@@ -128,7 +128,7 @@ def stats(changes):
         {'c': [
             {'v': row.posted_time},
             {'v': row.days_to_first_review},
-            {'v': 'Gerrit change %s patch %s first reviewer %s' % (row.change['_number'], row.revision['_number'], row.first_reviewer['username'])},
+            {'v': 'Gerrit change %s patch %s first reviewer %s' % (row.change['_number'], row.revision['_number'], row.first_reviewer.get('username') or row.first_reviewer['email'])},
             {'v': days_to_first_review_averages[i]},
             {'v': days_to_first_review_averages[i] + math.sqrt(days_to_first_review_upper_variances[i]) if days_to_first_review_averages[i] is not None else None},
             {'v': days_to_first_review_averages[i] - math.sqrt(days_to_first_review_lower_variances[i]) if days_to_first_review_averages[i] is not None else None},
