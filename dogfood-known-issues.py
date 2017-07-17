@@ -60,10 +60,14 @@ known_issues = [
     KnownIssue(
         description='/boot corrupted',
         console_patterns=[
-            r'error: not a correct XFS inode\.',
-            r'error: attempt to read or write outside of partition\.',
-            r'alloc magic is broken at 0x',
-            r'error: file `.*\.mod\' not found\.',
+            # error: not a correct XFS inode.
+            r'e\s*r\s*r\s*o\s*r\s*:\s+n\s*o\s*t\s+a\s+c\s*o\s*r\s*r\s*e\s*c\s*t\s+X\s*F\s*S\s+i\s*n\s*o\s*d\s*e\s*\.',
+            # error: attempt to read or write outside of partition.
+            r'e\s*r\s*r\s*o\s*r\s*:\s+a\s*t\s*t\s*e\s*m\s*p\s*t\s+t\s*o\s+r\s*e\s*a\s*d\s+o\s*r\s+w\s*r\s*i\s*t\s*e\s+o\s*u\s*t\s*s\s*i\s*d\s*e\s+o\s*f\s+p\s*a\s*r\s*t\s*i\s*t\s*i\s*o\s*n\s*\.',
+            # alloc magic is broken at 0x
+            r'a\s*l\s*l\s*o\s*c\s+m\s*a\s*g\s*i\s*c\s+i\s*s\s+b\s*r\s*o\s*k\s*e\s*n\s+a\s*t\s+0\s*x',
+            # error: file `/grub2/i386-pc/bufio.mod' not found.
+            r'e\s*r\s*r\s*o\s*r\s*:\s+f\s*i\s*l\s*e\s+`.*\.\s*m\s*o\s*d\s*\'\s+n\s*o\s*t\s+f\s*o\s*u\s*n\s*d\s*\.',
         ],
     ),
     KnownIssue(
