@@ -110,6 +110,10 @@ known_issues = [
         description='timeout in test_quiescent_period_only_applies_between_power_commands is too aggressive',
         failure_patterns=[r'test_quiescent_period_only_applies_between_power_commands.*wait_for_command_to_finish\(commands\[1\]'],
     ),
+    KnownIssue(
+        description='OpenStack instance fails to delete with status ERROR',
+        failure_patterns=[r'dynamic_virt.*failed to delete, status ERROR'],
+    ),
 ]
 
 def all_weeks():
