@@ -80,6 +80,13 @@ known_issues = [
         ],
     ),
     KnownIssue(
+        # originally considered to be a dupe of bug 1336272 above,
+        # but still occurring even though that one has been fixed
+        description='dogfood tests can fail in MACAddressAllocationTest due to StaleTaskStatusException',
+        bug_id='1346123',
+        failure_patterns=[r'MACAddressAllocationTest.*StaleTaskStatusException'],
+    ),
+    KnownIssue(
         # fixed in 74aba3513b1126002cf885e6bf48ff463a16dd3b
         description='race condition with recipe page refresh',
         failure_patterns=[r'test_page_updates_itself_while_recipe_is_running.*StaleElementReferenceException:'],
