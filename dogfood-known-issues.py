@@ -114,6 +114,10 @@ known_issues = [
         description='OpenStack instance fails to delete with status ERROR',
         failure_patterns=[r'dynamic_virt.*failed to delete, status ERROR'],
     ),
+    KnownIssue(
+        description='UnexpectedAlertPresentException',
+        failure_patterns=[r'UnexpectedAlertPresentException'],
+    ),
 ]
 
 def all_weeks():
