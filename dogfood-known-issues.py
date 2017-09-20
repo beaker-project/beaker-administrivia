@@ -115,6 +115,10 @@ known_issues = [
         failure_patterns=[r'dynamic_virt.*failed to delete, status ERROR'],
     ),
     KnownIssue(
+        description='OpenStack instance fails to build with status BUILD',
+        failure_patterns=[r'dynamic_virt.*failed to build, status BUILD'],
+    ),
+    KnownIssue(
         description='UnexpectedAlertPresentException',
         failure_patterns=[r'UnexpectedAlertPresentException'],
     ),
