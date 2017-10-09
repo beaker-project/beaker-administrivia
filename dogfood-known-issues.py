@@ -97,9 +97,13 @@ known_issues = [
         failure_patterns=[r'self\.assert_\(not any\(\'i386\' in option\.text for option in options\), options\).*StaleElementReferenceException:'],
     ),
     KnownIssue(
-        # fixed in 6263ae09783a43eeebeba6e18ea17326bfaf787c
         description='race condition in system grid custom column selection',
-        failure_patterns=[r'show_all_columns.*NoSuchElementException:.*System-Name'],
+        failure_patterns=[
+            # This first one is supposed to be fixed by 6263ae09783a43eeebeba6e18ea17326bfaf787c
+            r'show_all_columns.*NoSuchElementException:.*System-Name',
+            # ... but the fix itself seems to suffer a race too?
+            r'show_all_columns.*NoSuchElementException:.*#selectablecolumns input:checked',
+        ],
     ),
     KnownIssue(
         # fixed in 70d8e8d472ab7e95fbf4a18ef61ee209d27a5f34
