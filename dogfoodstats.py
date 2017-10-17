@@ -52,6 +52,9 @@ def hostname_to_group(hostname):
     Some hosts are basically identical so we group them together to make the
     stats more meaningful.
     """
+    if hostname.endswith('.openstacklocal'):
+        return 'OpenStack'
+    hostname = hostname.split('.')[0]
     if hostname.startswith('dev-kvm-guest-'):
         # These all have matching specs and are hosted on the same host.
         return 'dev-kvm-guest-*'
@@ -79,7 +82,6 @@ def stats():
         if not logs_containing_hostname:
             continue
         hostname = re.search(r'Hostname      : (.*)$', open(logs_containing_hostname[0]).read(), re.M).group(1)
-        hostname = hostname.split('.')[0]
         hostgroup = hostname_to_group(hostname)
         results = lxml.etree.parse(open(os.path.join(resultsdir, 'results.xml'), 'rb'))
         recipeid, = results.xpath('/job/recipeSet/recipe/@id')
