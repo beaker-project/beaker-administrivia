@@ -52,7 +52,7 @@ def hostname_to_group(hostname):
     Some hosts are basically identical so we group them together to make the
     stats more meaningful.
     """
-    if hostname.endswith('.openstacklocal'):
+    if hostname.startswith('host-192-168-'):
         return 'OpenStack'
     hostname = hostname.split('.')[0]
     if hostname.startswith('dev-kvm-guest-'):
@@ -78,10 +78,13 @@ def stats():
         if not os.path.exists(os.path.join(jobdir, 'beaker')):
             continue
         resultsdir, = glob(os.path.join(jobdir, 'beaker', 'J:*'))
-        logs_containing_hostname = glob(os.path.join(resultsdir, '*-test_log-Install-Beaker-server.log'))
+        logs_containing_hostname = glob(os.path.join(resultsdir, '*-test_log--distribution-install-Sysinfo.log'))
         if not logs_containing_hostname:
             continue
-        hostname = re.search(r'Hostname      : (.*)$', open(logs_containing_hostname[0]).read(), re.M).group(1)
+        hostname_match = re.search(r'Hostname                = (.*)$', open(logs_containing_hostname[0]).read(), re.M)
+        if not hostname_match:
+            raise ValueError('Log %s does not contain hostname' % logs_containing_hostname[0])
+        hostname = hostname_match.group(1)
         hostgroup = hostname_to_group(hostname)
         results = lxml.etree.parse(open(os.path.join(resultsdir, 'results.xml'), 'rb'))
         recipeid, = results.xpath('/job/recipeSet/recipe/@id')
