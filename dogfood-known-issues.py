@@ -151,7 +151,10 @@ def stats():
         if not os.path.exists(os.path.join(jobdir, 'beaker')):
             continue
         resultsdir, = glob(os.path.join(jobdir, 'beaker', 'J:*'))
-        results = lxml.etree.parse(open(os.path.join(resultsdir, 'results.xml'), 'rb'))
+        resultsfile = os.path.join(resultsdir, 'results.xml')
+        if os.path.getsize(resultsfile) == 0:
+            continue # Jenkins job died while watching the Beaker job
+        results = lxml.etree.parse(open(resultsfile, 'rb'))
         recipe_status, = results.xpath('/job/recipeSet/recipe/@status')
         if recipe_status not in ['Completed', 'Aborted']:
             continue
