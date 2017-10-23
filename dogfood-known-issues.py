@@ -127,6 +127,13 @@ known_issues = [
         failure_patterns=[r'dynamic_virt.*failed to stop, status ACTIVE'],
     ),
     KnownIssue(
+        description='OpenStack quota exceeded',
+        failure_patterns=[
+            r'OverQuotaClient: Quota exceeded for resources',
+            r'Error in provision_virt_recipe.*Conflict: Conflict (HTTP 409)',
+        ],
+    ),
+    KnownIssue(
         description='UnexpectedAlertPresentException',
         failure_patterns=[r'UnexpectedAlertPresentException'],
     ),
