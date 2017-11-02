@@ -131,6 +131,7 @@ known_issues = [
         failure_patterns=[
             r'OverQuotaClient: Quota exceeded for resources',
             r'Error in provision_virt_recipe.*Conflict: Conflict (HTTP 409)',
+            r'Forbidden: The number of defined ports:.*is over the limit',
         ],
     ),
     KnownIssue(
