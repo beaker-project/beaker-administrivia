@@ -106,6 +106,10 @@ known_issues = [
         ],
     ),
     KnownIssue(
+        description='race condition in job matrix',
+        failure_patterns=[r'test_job_matrix.*NoSuchElementException.*dataTables_scrollHeadInner'],
+    ),
+    KnownIssue(
         # fixed in 70d8e8d472ab7e95fbf4a18ef61ee209d27a5f34
         description='race condition in test_html_in_comments_is_escaped',
         failure_patterns=[r'test_html_in_comments_is_escaped.*AssertionError: u\'\' != \'<script>alert\("xss"\)</script>\''],
