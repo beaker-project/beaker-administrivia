@@ -49,7 +49,7 @@ koji -p beakerkoji add-group-pkg beaker-harness-fedora-$REL-build build bash bzi
 koji -p beakerkoji add-group beaker-harness-fedora-$REL-build srpm-build
 koji -p beakerkoji add-group-pkg beaker-harness-fedora-$REL-build srpm-build bash fedora-release git redhat-rpm-config rhpkg-simple fedpkg-minimal rpm-build shadow-utils
 koji -p beakerkoji add-external-repo --tag beaker-harness-fedora-$REL-build $EXTERNAL_REPO_NAME
-koji -p beakerkoji add-pkg --owner=$USER beaker-harness-fedora-$REL beah rhts lshw beaker-system-scan restraint staf
+koji -p beakerkoji add-pkg --owner=$USER beaker-harness-fedora-$REL beah rhts lshw beaker-system-scan restraint
 koji -p beakerkoji add-pkg --owner=$USER beaker-harness-fedora-$REL-redhat beakerlib-redhat
 koji -p beakerkoji add-pkg --owner=$USER beaker-harness-fedora-$REL-build rhpkg-simple
 koji -p beakerkoji tag-pkg --nowait beaker-harness-fedora-$REL-build rhpkg-simple-1.8-1.el7
