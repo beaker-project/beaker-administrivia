@@ -139,6 +139,12 @@ known_issues = [
         ],
     ),
     KnownIssue(
+        description='Openstack 500 error',
+        failure_patterns=[
+            r'ClientException.*\(HTTP 500\)',
+        ],
+    ),
+    KnownIssue(
         description='UnexpectedAlertPresentException',
         failure_patterns=[r'UnexpectedAlertPresentException'],
     ),
