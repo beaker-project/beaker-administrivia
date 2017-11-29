@@ -52,7 +52,7 @@ def hostname_to_group(hostname):
     Some hosts are basically identical so we group them together to make the
     stats more meaningful.
     """
-    if hostname.startswith('host-192-168-'):
+    if hostname.startswith('host-192-168-') or hostname.startswith('beaker-recipe-'):
         return 'OpenStack'
     hostname = hostname.split('.')[0]
     if hostname.startswith('dev-kvm-guest-'):
