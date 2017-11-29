@@ -46,6 +46,10 @@ invalid_recipe_ids = [ # These are excluded from the stats to avoid skewing them
     # reservesys skewed the recipe duration very high
     '17382',
 ]
+invalid_job_whiteboard_patterns = [
+    # buggy patch which caused the tests to time out
+    'beaker dogfood .* for Gerrit 5860/',
+]
 
 def hostname_to_group(hostname):
     """
@@ -87,6 +91,9 @@ def stats():
         hostname = hostname_match.group(1)
         hostgroup = hostname_to_group(hostname)
         results = lxml.etree.parse(open(os.path.join(resultsdir, 'results.xml'), 'rb'))
+        job_whiteboard = results.xpath('/job/whiteboard/text()')[0].strip()
+        if any(re.match(p, job_whiteboard) for p in invalid_job_whiteboard_patterns):
+            continue
         recipeid, = results.xpath('/job/recipeSet/recipe/@id')
         if recipeid in invalid_recipe_ids:
             continue
