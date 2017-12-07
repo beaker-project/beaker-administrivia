@@ -148,6 +148,11 @@ known_issues = [
         description='UnexpectedAlertPresentException',
         failure_patterns=[r'UnexpectedAlertPresentException'],
     ),
+    KnownIssue(
+        description='keystoneclient ConnectFailure',
+        failure_patterns=[r'ConnectFailure: Unable to establish connection to http:\/\/172\.16\.105\.2:35357\/v3\/OS-TRUST\/trusts'],
+    ),
+
 ]
 
 def all_weeks():
