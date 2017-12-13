@@ -106,6 +106,11 @@ def stats():
         setup_result, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/setup"]/@result')
         if setup_result != 'Pass':
             continue # tests are likely invalid
+        dogfood_logs = glob(os.path.join(resultsdir, '*-test_log--distribution-beaker-dogfood-tests.log'))
+        if not dogfood_logs:
+            continue
+        if '\nRan 0 tests in ' in open(dogfood_logs[0]).read():
+            continue
         duration_text, = results.xpath('/job/recipeSet/recipe/@duration')
         duration = parse_beaker_duration(duration_text)
         hours_ran = duration.total_seconds() / 3600.
