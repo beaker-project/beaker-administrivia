@@ -106,8 +106,12 @@ known_issues = [
         ],
     ),
     KnownIssue(
-        description='race condition in job matrix',
+        description='race condition in job matrix (dataTables_scrollHeadInner)',
         failure_patterns=[r'test_job_matrix.*NoSuchElementException.*dataTables_scrollHeadInner'],
+    ),
+    KnownIssue(
+        description='race condition in job matrix (StaleElementReferenceException selecting whiteboard)',
+        failure_patterns=[r'test_job_matrix.*\.select_by_visible_text\(self\.job_whiteboard\).*StaleElementReferenceException'],
     ),
     KnownIssue(
         # fixed in 70d8e8d472ab7e95fbf4a18ef61ee209d27a5f34
@@ -152,7 +156,10 @@ known_issues = [
         description='keystoneclient ConnectFailure',
         failure_patterns=[r'ConnectFailure: Unable to establish connection to http:\/\/172\.16\.105\.2:35357\/v3\/OS-TRUST\/trusts'],
     ),
-
+    KnownIssue(
+        description='ENOMEM from fork()',
+        failure_patterns=[r'os\.fork\(\).*Cannot allocate memory'],
+    ),
 ]
 
 def all_weeks():
