@@ -394,6 +394,11 @@ def main():
         for referenced_bug_id in bugs_referenced_in_commits():
             if referenced_bug_id not in bug_ids:
                 referenced_bug = get_bug(referenced_bug_id)
+                # If the bug had a patch merged, but then reverted, we can put 
+                # "Reverted" into the devel whiteboard to keep checkbugs from 
+                # getting upset about it.
+                if 'Reverted' in referenced_bug.devel_whiteboard.split():
+                    continue
                 # We have found a patch referencing a bug which is not in our 
                 # milestone. It could be a merge/cherry-pick of a bug which is 
                 # already fixed in some release, or on the maintenance branch: 
