@@ -45,6 +45,17 @@ invalid_recipe_ids = [ # These are excluded from the stats to avoid skewing them
     '16097',
     # reservesys skewed the recipe duration very high
     '17382',
+    # distro attributes in results.xml are "None" instead of proper values,
+    # which mucks up the graph's legend
+    # https://bugzilla.redhat.com/show_bug.cgi?id=911515#c33
+    '20559',
+    '20562',
+    '20563',
+    '20565',
+    '20603',
+    '20609',
+    '20612',
+    '20611',
 ]
 invalid_job_whiteboard_patterns = [
     # buggy patch which caused the tests to time out
