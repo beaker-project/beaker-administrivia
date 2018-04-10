@@ -19,6 +19,7 @@ if [ "$(koji -p beakerkoji list-external-repos --name $EXTERNAL_REPO_NAME --quie
 fi
 
 koji -p beakerkoji add-tag beaker-client-fedora-$REL
+koji -p beakerkoji edit-tag -x mock.package_manager=dnf beaker-client-fedora-$REL
 koji -p beakerkoji add-tag beaker-client-fedora-$REL-testing --parent beaker-client-fedora-$REL
 koji -p beakerkoji add-tag beaker-client-fedora-$REL-redhat --parent beaker-client-fedora-$REL
 koji -p beakerkoji add-tag beaker-client-fedora-$REL-redhat-testing --parent beaker-client-fedora-$REL-testing --parent beaker-client-fedora-$REL-redhat
@@ -36,6 +37,7 @@ koji -p beakerkoji add-pkg --owner=$USER beaker-client-fedora-$REL-build rhpkg-s
 koji -p beakerkoji tag-pkg --nowait beaker-client-fedora-$REL-build rhpkg-simple-1.8-1.el7
 
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL
+koji -p beakerkoji edit-tag -x mock.package_manager=dnf beaker-harness-fedora-$REL
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL-testing --parent beaker-harness-fedora-$REL
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL-redhat --parent beaker-harness-fedora-$REL
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL-redhat-testing --parent beaker-harness-fedora-$REL-testing --parent beaker-harness-fedora-$REL-redhat
@@ -55,6 +57,7 @@ koji -p beakerkoji add-pkg --owner=$USER beaker-harness-fedora-$REL-build rhpkg-
 koji -p beakerkoji tag-pkg --nowait beaker-harness-fedora-$REL-build rhpkg-simple-1.8-1.el7
 
 koji -p beakerkoji add-tag beaker-server-fedora-$REL
+koji -p beakerkoji edit-tag -x mock.package_manager=dnf beaker-server-fedora-$REL
 koji -p beakerkoji add-tag beaker-server-fedora-$REL-testing --parent beaker-server-fedora-$REL
 koji -p beakerkoji add-tag beaker-server-fedora-$REL-build --parent beaker-server-fedora-$REL --arches=x86_64
 koji -p beakerkoji add-target beaker-server-fedora-$REL-testing beaker-server-fedora-$REL-build beaker-server-fedora-$REL-testing
