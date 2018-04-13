@@ -327,6 +327,9 @@ def main():
     bug_ids = set(bug.bug_id for bug in bugs)
     if options.verbose:
         print "  Retrieved %d bugs" % len(bugs)
+    if not bug_ids:
+        print "No bugs to check. Bye Bye"
+        return
 
     if options.verbose:
         print "Retrieving code review details from Gerrit"
