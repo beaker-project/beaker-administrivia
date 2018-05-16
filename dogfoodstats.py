@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import time
 from glob import glob
 import math
 from collections import namedtuple
@@ -8,6 +9,9 @@ import datetime
 import json
 import re
 import lxml.etree
+
+max_job_age = 2 * 365 * 24 * 60 * 60 # 2 years
+min_job_mtime = time.time() - max_job_age
 
 def dogfood_job_dirs():
     el6dir = '/srv/www/jenkins-results/beaker-review-checks-dogfood-RedHatEnterpriseLinux6'
@@ -90,6 +94,8 @@ def stats():
     rowtype = namedtuple('Row', ['timestamp', 'hours_ran', 'recipeid', 'hostgroup', 'hostname'])
     rows = []
     for jobdir in dogfood_job_dirs():
+        if os.path.getmtime(jobdir) < min_job_mtime:
+            continue
         if not os.path.exists(os.path.join(jobdir, 'beaker')):
             continue
         resultsdir, = glob(os.path.join(jobdir, 'beaker', 'J:*'))
