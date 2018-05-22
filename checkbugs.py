@@ -369,7 +369,10 @@ def main():
             acceptable_bug_states = ['ASSIGNED', 'POST']
         else:
             # Patches exist and they are all merged.
-            acceptable_bug_states = ['MODIFIED', 'ON_QA', 'VERIFIED', 'CLOSED']
+            if 'Reverted' in bug.devel_whiteboard.split():
+                acceptable_bug_states = ['ASSIGNED']
+            else:
+                acceptable_bug_states = ['MODIFIED', 'ON_QA', 'VERIFIED', 'CLOSED']
         if bug.bug_status not in acceptable_bug_states:
             problem('Bug %s should be %s, not %s'
                     % (bug.bug_id, ' or '.join(acceptable_bug_states), bug.bug_status))
