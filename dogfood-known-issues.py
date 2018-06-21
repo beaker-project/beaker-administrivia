@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 from glob import glob
@@ -32,7 +32,7 @@ class KnownIssue(object):
     def matches_nose_output(self, filename):
         if not self.failure_patterns:
             return False
-        failures = re.split(r'={70}\n|-{70}\nRan ', open(filename).read())[1:-1]
+        failures = re.split(rb'={70}\n|-{70}\nRan ', open(filename, 'rb').read())[1:-1]
         for failure in failures:
             for failure_pattern in self.failure_patterns:
                 if failure_pattern.search(failure):
@@ -42,7 +42,7 @@ class KnownIssue(object):
     def matches_console_output(self, filename):
         if not self.console_patterns:
             return False
-        console = open(filename).read()
+        console = open(filename, 'rb').read()
         for console_pattern in self.console_patterns:
             if console_pattern.search(console):
                 return True
@@ -51,23 +51,23 @@ class KnownIssue(object):
 known_issues = [
     KnownIssue(
         description='WebDriverException: Message: Can\'t load the profile',
-        failure_patterns=[r'WebDriverException: Message: Can\'t load the profile\.'],
+        failure_patterns=[rb'WebDriverException: Message: Can\'t load the profile\.'],
     ),
     KnownIssue(
         description='WebDriver Connection refused',
-        failure_patterns=[r'webdriver\.Firefox\(.*create_connection.*Connection refused'],
+        failure_patterns=[rb'webdriver\.Firefox\(.*create_connection.*Connection refused'],
     ),
     KnownIssue(
         description='/boot corrupted',
         console_patterns=[
             # error: not a correct XFS inode.
-            r'e\s*r\s*r\s*o\s*r\s*:\s+n\s*o\s*t\s+a\s+c\s*o\s*r\s*r\s*e\s*c\s*t\s+X\s*F\s*S\s+i\s*n\s*o\s*d\s*e\s*\.',
+            rb'e\s*r\s*r\s*o\s*r\s*:\s+n\s*o\s*t\s+a\s+c\s*o\s*r\s*r\s*e\s*c\s*t\s+X\s*F\s*S\s+i\s*n\s*o\s*d\s*e\s*\.',
             # error: attempt to read or write outside of partition.
-            r'e\s*r\s*r\s*o\s*r\s*:\s+a\s*t\s*t\s*e\s*m\s*p\s*t\s+t\s*o\s+r\s*e\s*a\s*d\s+o\s*r\s+w\s*r\s*i\s*t\s*e\s+o\s*u\s*t\s*s\s*i\s*d\s*e\s+o\s*f\s+p\s*a\s*r\s*t\s*i\s*t\s*i\s*o\s*n\s*\.',
+            rb'e\s*r\s*r\s*o\s*r\s*:\s+a\s*t\s*t\s*e\s*m\s*p\s*t\s+t\s*o\s+r\s*e\s*a\s*d\s+o\s*r\s+w\s*r\s*i\s*t\s*e\s+o\s*u\s*t\s*s\s*i\s*d\s*e\s+o\s*f\s+p\s*a\s*r\s*t\s*i\s*t\s*i\s*o\s*n\s*\.',
             # alloc magic is broken at 0x
-            r'a\s*l\s*l\s*o\s*c\s+m\s*a\s*g\s*i\s*c\s+i\s*s\s+b\s*r\s*o\s*k\s*e\s*n\s+a\s*t\s+0\s*x',
+            rb'a\s*l\s*l\s*o\s*c\s+m\s*a\s*g\s*i\s*c\s+i\s*s\s+b\s*r\s*o\s*k\s*e\s*n\s+a\s*t\s+0\s*x',
             # error: file `/grub2/i386-pc/bufio.mod' not found.
-            r'e\s*r\s*r\s*o\s*r\s*:\s+f\s*i\s*l\s*e\s+`.*\.\s*m\s*o\s*d\s*\'\s+n\s*o\s*t\s+f\s*o\s*u\s*n\s*d\s*\.',
+            rb'e\s*r\s*r\s*o\s*r\s*:\s+f\s*i\s*l\s*e\s+`.*\.\s*m\s*o\s*d\s*\'\s+n\s*o\s*t\s+f\s*o\s*u\s*n\s*d\s*\.',
         ],
     ),
     KnownIssue(
@@ -75,8 +75,8 @@ known_issues = [
         description='dogfood tests can fail because beaker-provision is trying to use fence_ilo to power on a non-existent machine',
         bug_id='1336272',
         failure_patterns=[
-            r'self\.assertEqual\(activity_count \+ 1, Activity\.query\.count\(\)\)\nAssertionError:',
-            r'command\.change_status\(CommandStatus\.aborted\).*StaleCommandStatusException:',
+            rb'self\.assertEqual\(activity_count \+ 1, Activity\.query\.count\(\)\)\nAssertionError:',
+            rb'command\.change_status\(CommandStatus\.aborted\).*StaleCommandStatusException:',
         ],
     ),
     KnownIssue(
@@ -84,81 +84,81 @@ known_issues = [
         # but still occurring even though that one has been fixed
         description='dogfood tests can fail in MACAddressAllocationTest due to StaleTaskStatusException',
         bug_id='1346123',
-        failure_patterns=[r'MACAddressAllocationTest.*StaleTaskStatusException'],
+        failure_patterns=[rb'MACAddressAllocationTest.*StaleTaskStatusException'],
     ),
     KnownIssue(
         # fixed in 74aba3513b1126002cf885e6bf48ff463a16dd3b
         description='race condition with recipe page refresh',
-        failure_patterns=[r'test_page_updates_itself_while_recipe_is_running.*StaleElementReferenceException:'],
+        failure_patterns=[rb'test_page_updates_itself_while_recipe_is_running.*StaleElementReferenceException:'],
     ),
     KnownIssue(
         # fixed in bc3a8af2ec6aa9a5f354629b60579606840f08cb
         description='race condition in reserve workflow tree selection',
-        failure_patterns=[r'self\.assert_\(not any\(\'i386\' in option\.text for option in options\), options\).*StaleElementReferenceException:'],
+        failure_patterns=[rb'self\.assert_\(not any\(\'i386\' in option\.text for option in options\), options\).*StaleElementReferenceException:'],
     ),
     KnownIssue(
         description='race condition in system grid custom column selection',
         failure_patterns=[
             # This first one is supposed to be fixed by 6263ae09783a43eeebeba6e18ea17326bfaf787c
-            r'show_all_columns.*NoSuchElementException:.*System-Name',
+            rb'show_all_columns.*NoSuchElementException:.*System-Name',
             # ... but the fix itself seems to suffer a race too?
-            r'show_all_columns.*NoSuchElementException:.*#selectablecolumns input:checked',
+            rb'show_all_columns.*NoSuchElementException:.*#selectablecolumns input:checked',
         ],
     ),
     KnownIssue(
         description='race condition in job matrix (dataTables_scrollHeadInner)',
-        failure_patterns=[r'test_job_matrix.*NoSuchElementException.*dataTables_scrollHeadInner'],
+        failure_patterns=[rb'test_job_matrix.*NoSuchElementException.*dataTables_scrollHeadInner'],
     ),
     KnownIssue(
         description='race condition in job matrix (StaleElementReferenceException selecting whiteboard)',
-        failure_patterns=[r'test_job_matrix.*\.select_by_visible_text\(self\.job_whiteboard\).*StaleElementReferenceException'],
+        failure_patterns=[rb'test_job_matrix.*\.select_by_visible_text\(self\.job_whiteboard\).*StaleElementReferenceException'],
     ),
     KnownIssue(
         # fixed in 70d8e8d472ab7e95fbf4a18ef61ee209d27a5f34
         description='race condition in test_html_in_comments_is_escaped',
-        failure_patterns=[r'test_html_in_comments_is_escaped.*AssertionError: u\'\' != \'<script>alert\("xss"\)</script>\''],
+        failure_patterns=[rb'test_html_in_comments_is_escaped.*AssertionError: u\'\' != \'<script>alert\("xss"\)</script>\''],
     ),
     KnownIssue(
         description='timeout in test_quiescent_period_only_applies_between_power_commands is too aggressive',
-        failure_patterns=[r'test_quiescent_period_only_applies_between_power_commands.*wait_for_command_to_finish\(commands\[1\]'],
+        failure_patterns=[rb'test_quiescent_period_only_applies_between_power_commands.*wait_for_command_to_finish\(commands\[1\]'],
     ),
     KnownIssue(
         description='OpenStack instance fails to delete with status ERROR',
-        failure_patterns=[r'dynamic_virt.*failed to delete, status ERROR'],
+        failure_patterns=[rb'dynamic_virt.*failed to delete, status ERROR'],
     ),
     KnownIssue(
         description='OpenStack instance fails to build with status BUILD',
-        failure_patterns=[r'dynamic_virt.*failed to build, status BUILD'],
+        failure_patterns=[rb'dynamic_virt.*failed to build, status BUILD'],
     ),
     KnownIssue(
         description='OpenStack instance fails to stop with status ACTIVE',
-        failure_patterns=[r'dynamic_virt.*failed to stop, status ACTIVE'],
+        failure_patterns=[rb'dynamic_virt.*failed to stop, status ACTIVE'],
     ),
     KnownIssue(
         description='OpenStack quota exceeded',
         failure_patterns=[
-            r'OverQuotaClient: Quota exceeded for resources',
-            r'Error in provision_virt_recipe.*Conflict: Conflict (HTTP 409)',
-            r'Forbidden: The number of defined ports:.*is over the limit',
+            rb'OverQuotaClient: Quota exceeded for resources',
+            rb'Error in provision_virt_recipe.*Conflict: Conflict (HTTP 409)',
+            rb'Forbidden: The number of defined ports:.*is over the limit',
         ],
     ),
     KnownIssue(
         description='Openstack 500 error',
         failure_patterns=[
-            r'ClientException.*\(HTTP 500\)',
+            rb'ClientException.*\(HTTP 500\)',
         ],
     ),
     KnownIssue(
         description='UnexpectedAlertPresentException',
-        failure_patterns=[r'UnexpectedAlertPresentException'],
+        failure_patterns=[rb'UnexpectedAlertPresentException'],
     ),
     KnownIssue(
         description='keystoneclient ConnectFailure',
-        failure_patterns=[r'ConnectFailure: Unable to establish connection to http:\/\/172\.16\.105\.2:35357\/v3\/OS-TRUST\/trusts'],
+        failure_patterns=[rb'ConnectFailure: Unable to establish connection to http:\/\/172\.16\.105\.2:35357\/v3\/OS-TRUST\/trusts'],
     ),
     KnownIssue(
         description='ENOMEM from fork()',
-        failure_patterns=[r'os\.fork\(\).*Cannot allocate memory'],
+        failure_patterns=[rb'os\.fork\(\).*Cannot allocate memory'],
     ),
 ]
 
@@ -259,7 +259,7 @@ def all_issues_summary(occurrences, all_jobs):
 def page(known_issue_occurrences, all_jobs):
     summaries = [known_issue_summary(known_issue, occurrences)
             for known_issue, occurrences
-            in sorted(known_issue_occurrences.iteritems(), key=lambda (k, o): o[-1], reverse=True)]
+            in sorted(known_issue_occurrences.items(), key=lambda item: item[1][-1], reverse=True)]
     all_summary = all_issues_summary(sum(known_issue_occurrences.values(), []), all_jobs)
     return """
     <html>
@@ -283,7 +283,7 @@ def page(known_issue_occurrences, all_jobs):
     """ % (all_summary, '\n'.join(summaries), datetime.datetime.utcnow().isoformat() + 'Z')
 
 def main():
-    print page(*stats())
+    print(page(*stats()))
 
 if __name__ == '__main__':
     main()

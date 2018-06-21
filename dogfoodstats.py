@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import time
@@ -250,7 +250,7 @@ def page(table):
     """ % (JSONEncoderWithDate().encode(table), datetime.datetime.utcnow().isoformat() + 'Z')
 
 def main():
-    print page(stats())
+    print(page(stats()))
 
 if __name__ == '__main__':
     main()

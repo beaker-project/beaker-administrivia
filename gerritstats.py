@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import math
 from collections import namedtuple
@@ -72,7 +72,7 @@ def stats(changes):
             'days_to_first_review', 'days_to_second_review'])
     rows = []
     for change in changes:
-        for revision in change['revisions'].itervalues():
+        for revision in change['revisions'].values():
             posted_time = parse_gerrit_timestamp(revision['created'])
             if posted_time < POSTED_SINCE:
                 continue
@@ -210,7 +210,7 @@ def main():
     response.raise_for_status()
     # need to strip Gerrit's anti-XSSI prefix from response body
     changes = json.loads(response.text.lstrip(")]}'"))
-    print page(stats(changes))
+    print(page(stats(changes)))
 
 if __name__ == '__main__':
     main()
