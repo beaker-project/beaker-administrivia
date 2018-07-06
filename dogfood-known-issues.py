@@ -92,6 +92,11 @@ known_issues = [
         failure_patterns=[rb'test_page_updates_itself_while_recipe_is_running.*StaleElementReferenceException:'],
     ),
     KnownIssue(
+        # should be fixed by https://gerrit.beaker-project.org/#/c/beaker/+/6189
+        description='race condition with recipe page reservation tab re-rendering',
+        failure_patterns=[rb'Return the reservation.*StaleElementReferenceException'],
+    ),
+    KnownIssue(
         # fixed in bc3a8af2ec6aa9a5f354629b60579606840f08cb
         description='race condition in reserve workflow tree selection',
         failure_patterns=[rb'self\.assert_\(not any\(\'i386\' in option\.text for option in options\), options\).*StaleElementReferenceException:'],
