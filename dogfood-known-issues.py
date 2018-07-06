@@ -148,6 +148,10 @@ known_issues = [
         ],
     ),
     KnownIssue(
+        description='OpenStack Keystone 504 error',
+        failure_patterns=[rb'keystoneclient.*AuthorizationFailure.*\(HTTP 504\)'],
+    ),
+    KnownIssue(
         description='Openstack 500 error',
         failure_patterns=[
             rb'ClientException.*\(HTTP 500\)',
