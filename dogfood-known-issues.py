@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import sys
 import os
 from glob import glob
 import math
@@ -29,22 +30,21 @@ class KnownIssue(object):
         self.console_patterns = [re.compile(patt, re.DOTALL)
                 for patt in (console_patterns or [])]
 
-    def matches_nose_output(self, filename):
+    def matches_nose_output(self, output):
         if not self.failure_patterns:
             return False
-        failures = re.split(rb'={70}\n|-{70}\nRan ', open(filename, 'rb').read())[1:-1]
+        failures = re.split(rb'={70}\n|-{70}\nRan ', output)[1:-1]
         for failure in failures:
             for failure_pattern in self.failure_patterns:
                 if failure_pattern.search(failure):
                     return True
         return False
 
-    def matches_console_output(self, filename):
+    def matches_console_output(self, output):
         if not self.console_patterns:
             return False
-        console = open(filename, 'rb').read()
         for console_pattern in self.console_patterns:
-            if console_pattern.search(console):
+            if console_pattern.search(output):
                 return True
         return False
 
@@ -197,16 +197,34 @@ def stats():
         recipe_status, = results.xpath('/job/recipeSet/recipe/@status')
         if recipe_status not in ['Completed', 'Aborted']:
             continue
-        testsuite_logs = glob(os.path.join(resultsdir, '*-test_log--distribution-beaker-dogfood-tests.log'))
-        console_logs = glob(os.path.join(resultsdir, '*-console.log'))
         # This is not great, but we don't have finish_time in results.xml
         timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(resultsdir))
-        for known_issue in known_issues:
-            if testsuite_logs and known_issue.matches_nose_output(testsuite_logs[0]):
-                known_issue_occurrences[known_issue].append(timestamp)
-            if console_logs and known_issue.matches_console_output(console_logs[0]):
-                known_issue_occurrences[known_issue].append(timestamp)
+        # Test nose output against known issues
+        nose_result = results.xpath('/job/recipeSet/recipe/task/results/result[@path="/distribution/beaker/dogfood/tests"]')
+        if nose_result:
+            result_id = nose_result[0].get('id')
+            # Restraint gives resultoutputfile.log, beah gives test_log--*.
+            # But we don't want to look in dmesg.log or other stuff like that.
+            result_logs = nose_result[0].xpath('logs/log[@name="resultoutputfile.log" or starts-with(@name, "test_log--")]')
+            if result_logs:
+                nose_log_filename = os.path.join(resultsdir, '%s-%s' % (nose_result[0].get('id'), result_logs[0].get('name')))
+                if os.path.exists(nose_log_filename):
+                    nose_output = open(nose_log_filename, 'rb').read()
+                    for known_issue in known_issues:
+                        if known_issue.matches_nose_output(nose_output):
+                            known_issue_occurrences[known_issue].append(timestamp)
+        # Test console log against known issues
+        recipe_id, = results.xpath('/job/recipeSet/recipe/@id')
+        console_log_filename = os.path.join(resultsdir, '%s-console.log' % recipe_id)
+        if os.path.exists(console_log_filename):
+            console_output = open(console_log_filename, 'rb').read()
+            for known_issue in known_issues:
+                if known_issue.matches_console_output(console_output):
+                    known_issue_occurrences[known_issue].append(timestamp)
         all_jobs.append(timestamp)
+    for known_issue, occurrences in known_issue_occurrences.items():
+        if not occurrences:
+            print('WARNING: known issue %r did not match any jobs, bad pattern?' % known_issue.description, file=sys.stderr)
     return known_issue_occurrences, all_jobs
 
 def known_issue_summary(known_issue, occurrences):
