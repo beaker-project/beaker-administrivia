@@ -71,15 +71,6 @@ known_issues = [
         ],
     ),
     KnownIssue(
-        # fixed in d3f70b5947b6927460ebed0a580fa2efe9bfd746
-        description='dogfood tests can fail because beaker-provision is trying to use fence_ilo to power on a non-existent machine',
-        bug_id='1336272',
-        failure_patterns=[
-            rb'self\.assertEqual\(activity_count \+ 1, Activity\.query\.count\(\)\)\nAssertionError:',
-            rb'command\.change_status\(CommandStatus\.aborted\).*StaleCommandStatusException:',
-        ],
-    ),
-    KnownIssue(
         # originally considered to be a dupe of bug 1336272 above,
         # but still occurring even though that one has been fixed
         description='dogfood tests can fail in MACAddressAllocationTest due to StaleTaskStatusException',
@@ -87,19 +78,9 @@ known_issues = [
         failure_patterns=[rb'MACAddressAllocationTest.*StaleTaskStatusException'],
     ),
     KnownIssue(
-        # fixed in 74aba3513b1126002cf885e6bf48ff463a16dd3b
-        description='race condition with recipe page refresh',
-        failure_patterns=[rb'test_page_updates_itself_while_recipe_is_running.*StaleElementReferenceException:'],
-    ),
-    KnownIssue(
         # should be fixed by https://gerrit.beaker-project.org/#/c/beaker/+/6189
         description='race condition with recipe page reservation tab re-rendering',
         failure_patterns=[rb'Return the reservation.*StaleElementReferenceException'],
-    ),
-    KnownIssue(
-        # fixed in bc3a8af2ec6aa9a5f354629b60579606840f08cb
-        description='race condition in reserve workflow tree selection',
-        failure_patterns=[rb'self\.assert_\(not any\(\'i386\' in option\.text for option in options\), options\).*StaleElementReferenceException:'],
     ),
     KnownIssue(
         description='race condition in system grid custom column selection',
@@ -117,15 +98,6 @@ known_issues = [
     KnownIssue(
         description='race condition in job matrix (StaleElementReferenceException selecting whiteboard)',
         failure_patterns=[rb'test_job_matrix.*\.select_by_visible_text\(self\.job_whiteboard\).*StaleElementReferenceException'],
-    ),
-    KnownIssue(
-        # fixed in 70d8e8d472ab7e95fbf4a18ef61ee209d27a5f34
-        description='race condition in test_html_in_comments_is_escaped',
-        failure_patterns=[rb'test_html_in_comments_is_escaped.*AssertionError: u\'\' != \'<script>alert\("xss"\)</script>\''],
-    ),
-    KnownIssue(
-        description='timeout in test_quiescent_period_only_applies_between_power_commands is too aggressive',
-        failure_patterns=[rb'test_quiescent_period_only_applies_between_power_commands.*wait_for_command_to_finish\(commands\[1\]'],
     ),
     KnownIssue(
         description='OpenStack instance fails to delete with status ERROR',
