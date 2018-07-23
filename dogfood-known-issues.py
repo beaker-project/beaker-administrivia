@@ -100,6 +100,10 @@ known_issues = [
         failure_patterns=[rb'test_job_matrix.*\.select_by_visible_text\(self\.job_whiteboard\).*StaleElementReferenceException'],
     ),
     KnownIssue(
+        description='NoSuchElementException when returning a reserved recipe',
+        failure_patterns=[rb'find_element_by_xpath.*button.*Returning\\u2026.*NoSuchElementException'],
+    ),
+    KnownIssue(
         description='OpenStack instance fails to delete with status ERROR',
         failure_patterns=[rb'dynamic_virt.*failed to delete, status ERROR'],
     ),
