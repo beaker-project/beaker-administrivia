@@ -104,6 +104,10 @@ known_issues = [
         failure_patterns=[rb'find_element_by_xpath.*button.*Returning\\u2026.*NoSuchElementException'],
     ),
     KnownIssue(
+        description='watchdog not reduced to 0 when returning a reserved recipe',
+        failure_patterns=[rb'status_watchdog.*AssertionError: .* not less than or equal to 0'],
+    ),
+    KnownIssue(
         description='OpenStack instance fails to delete with status ERROR',
         failure_patterns=[rb'dynamic_virt.*failed to delete, status ERROR'],
     ),
