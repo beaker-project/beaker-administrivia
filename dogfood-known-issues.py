@@ -83,6 +83,16 @@ known_issues = [
         failure_patterns=[rb'Return the reservation.*StaleElementReferenceException'],
     ),
     KnownIssue(
+        # maybe fixed by https://gerrit.beaker-project.org/#/c/beaker/+/6189 ?
+        description='NoSuchElementException when returning a reserved recipe',
+        failure_patterns=[rb'find_element_by_xpath.*button.*Returning\\u2026.*NoSuchElementException'],
+    ),
+    KnownIssue(
+        # maybe fixed by https://gerrit.beaker-project.org/#/c/beaker/+/6189 ?
+        description='watchdog not reduced to 0 when returning a reserved recipe',
+        failure_patterns=[rb'status_watchdog.*AssertionError: .* not less than or equal to 0'],
+    ),
+    KnownIssue(
         description='race condition in system grid custom column selection',
         failure_patterns=[
             # This first one is supposed to be fixed by 6263ae09783a43eeebeba6e18ea17326bfaf787c
@@ -98,14 +108,6 @@ known_issues = [
     KnownIssue(
         description='race condition in job matrix (StaleElementReferenceException selecting whiteboard)',
         failure_patterns=[rb'test_job_matrix.*\.select_by_visible_text\(self\.job_whiteboard\).*StaleElementReferenceException'],
-    ),
-    KnownIssue(
-        description='NoSuchElementException when returning a reserved recipe',
-        failure_patterns=[rb'find_element_by_xpath.*button.*Returning\\u2026.*NoSuchElementException'],
-    ),
-    KnownIssue(
-        description='watchdog not reduced to 0 when returning a reserved recipe',
-        failure_patterns=[rb'status_watchdog.*AssertionError: .* not less than or equal to 0'],
     ),
     KnownIssue(
         description='OpenStack instance fails to delete with status ERROR',
