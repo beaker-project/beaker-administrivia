@@ -90,6 +90,19 @@ def parse_beaker_duration(duration_text):
     hours, minutes, seconds = duration_text.split(':')
     return datetime.timedelta(seconds=(int(hours) * 3600 + int(minutes) * 60 + int(seconds)))
 
+def log_filename_for_result(resultsxml, resultsdir, result_name): # -> filename or None if it doesn't exist
+    result = resultsxml.xpath('/job/recipeSet/recipe/task/results/result[@path="%s"]' % result_name)
+    if not result:
+        return None
+    # Restraint gives resultoutputfile.log, beah gives test_log--*.
+    result_logs = result[0].xpath('logs/log[@name="resultoutputfile.log" or starts-with(@name, "test_log--")]')
+    if not result_logs:
+        return None
+    filename = os.path.join(resultsdir, '%s-%s' % (result[0].get('id'), result_logs[0].get('name')))
+    if not os.path.exists(filename):
+        return None
+    return filename
+
 def stats():
     rowtype = namedtuple('Row', ['timestamp', 'hours_ran', 'recipeid', 'hostgroup', 'hostname'])
     rows = []
@@ -99,15 +112,15 @@ def stats():
         if not os.path.exists(os.path.join(jobdir, 'beaker')):
             continue
         resultsdir, = glob(os.path.join(jobdir, 'beaker', 'J:*'))
-        logs_containing_hostname = glob(os.path.join(resultsdir, '*-test_log--distribution-install-Sysinfo.log'))
-        if not logs_containing_hostname:
+        results = lxml.etree.parse(open(os.path.join(resultsdir, 'results.xml'), 'rb'))
+        sysinfo_log_filename = log_filename_for_result(results, resultsdir, '/distribution/install/Sysinfo')
+        if not sysinfo_log_filename:
             continue
-        hostname_match = re.search(r'Hostname                = (.*)$', open(logs_containing_hostname[0]).read(), re.M)
+        hostname_match = re.search(r'Hostname                = (.*)$', open(sysinfo_log_filename).read(), re.M)
         if not hostname_match:
-            raise ValueError('Log %s does not contain hostname' % logs_containing_hostname[0])
+            raise ValueError('Log %s does not contain hostname' % sysinfo_log_filename)
         hostname = hostname_match.group(1)
         hostgroup = hostname_to_group(hostname)
-        results = lxml.etree.parse(open(os.path.join(resultsdir, 'results.xml'), 'rb'))
         job_whiteboard = results.xpath('/job/whiteboard/text()')[0].strip()
         if any(re.match(p, job_whiteboard) for p in invalid_job_whiteboard_patterns):
             continue
@@ -123,10 +136,10 @@ def stats():
         setup_result, = results.xpath('/job/recipeSet/recipe/task[@name="/distribution/beaker/setup"]/@result')
         if setup_result != 'Pass':
             continue # tests are likely invalid
-        dogfood_logs = glob(os.path.join(resultsdir, '*-test_log--distribution-beaker-dogfood-tests.log'))
-        if not dogfood_logs:
+        nose_log_filename = log_filename_for_result(results, resultsdir, '/distribution/beaker/dogfood/tests')
+        if not nose_log_filename:
             continue
-        if '\nRan 0 tests in ' in open(dogfood_logs[0]).read():
+        if '\nRan 0 tests in ' in open(nose_log_filename).read():
             continue
         duration_text, = results.xpath('/job/recipeSet/recipe/@duration')
         duration = parse_beaker_duration(duration_text)
