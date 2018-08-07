@@ -236,6 +236,7 @@ def page(table):
               title: 'Dogfood jobs: running time by host',
               hAxis: {title: 'Finished', viewWindowMode: 'maximized'},
               vAxis: {title: 'Hours ran'},
+              chartArea: {left: 75, width: '75%%', height: '70%%'},
               legend: {'position': 'right'},
               tooltip: {isHtml: true},
               explorer: {},
