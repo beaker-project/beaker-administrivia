@@ -139,7 +139,11 @@ def stats():
         nose_log_filename = log_filename_for_result(results, resultsdir, '/distribution/beaker/dogfood/tests')
         if not nose_log_filename:
             continue
-        if '\nRan 0 tests in ' in open(nose_log_filename).read():
+        test_count_match = re.search(r'^Ran (\d+) tests in .*s$', open(nose_log_filename).read(), re.M)
+        if not test_count_match:
+            continue
+        test_count = int(test_count_match.group(1))
+        if test_count < 1000:
             continue
         duration_text, = results.xpath('/job/recipeSet/recipe/@duration')
         duration = parse_beaker_duration(duration_text)
