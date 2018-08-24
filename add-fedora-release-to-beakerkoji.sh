@@ -41,7 +41,7 @@ koji -p beakerkoji edit-tag -x mock.package_manager=dnf beaker-harness-fedora-$R
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL-testing --parent beaker-harness-fedora-$REL
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL-redhat --parent beaker-harness-fedora-$REL
 koji -p beakerkoji add-tag beaker-harness-fedora-$REL-redhat-testing --parent beaker-harness-fedora-$REL-testing --parent beaker-harness-fedora-$REL-redhat
-koji -p beakerkoji add-tag beaker-harness-fedora-$REL-build --parent beaker-harness-fedora-$REL --arches=x86_64
+koji -p beakerkoji add-tag beaker-harness-fedora-$REL-build --parent beaker-harness-fedora-$REL --arches=x86_64,aarch64
 koji -p beakerkoji add-target beaker-harness-fedora-$REL beaker-harness-fedora-$REL-build beaker-harness-fedora-$REL
 koji -p beakerkoji add-target beaker-harness-fedora-$REL-testing beaker-harness-fedora-$REL-build beaker-harness-fedora-$REL-testing
 koji -p beakerkoji add-target beaker-harness-fedora-$REL-redhat beaker-harness-fedora-$REL-build beaker-harness-fedora-$REL-redhat
