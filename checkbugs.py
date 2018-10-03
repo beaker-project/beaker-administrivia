@@ -66,14 +66,25 @@ def confirm(prompt):
 ################################################
 
 # Historically Beaker's version numbers have not been so simple/regular, but 
-# these days they are always 'x.y' where x and y are integers.
+# these days they are always 'x.y' where x and y are integers,
+# possibly with 'rcN' appended.
 
-def increment_major(version):
-    major, minor = [int(piece) for piece in version.split('.')]
-    return '%s.%s' % (major + 1, 0)
+def next_develop(version):
+    m = re.match(r'(\d+)\.(\d+)(rc\d+)?$', version)
+    major = int(m.group(1))
+    minor = int(m.group(2))
+    if m.group(3):
+        # It's a release candidate, so the final release of the same version
+        # number is next
+        return '%s.%s' % (major, minor)
+    else:
+        return '%s.%s' % (major + 1, 0)
 
-def increment_minor(version):
-    major, minor = [int(piece) for piece in version.split('.')]
+def next_maintenance(version):
+    m = re.match(r'(\d+)\.(\d+)(rc\d+)?$', version)
+    major = int(m.group(1))
+    minor = int(m.group(2))
+    # There is normally no release candidates on maintenance branches
     return '%s.%s' % (major, minor + 1)
 
 def vercmp(left, right):
@@ -287,9 +298,9 @@ def get_default_milestone():
     # example, develop branch with version 22.3 means we are interested in 
     # 23.0).
     if current_git_branch().startswith('release-'):
-        return increment_minor(current_version())
+        return next_maintenance(current_version())
     else:
-        return increment_major(current_version())
+        return next_develop(current_version())
 
 # These are the names of long-lived feature branches which are abandoned and/or 
 # rebased and/or cherry-picked. That is, these are *not expected* to be merged 
