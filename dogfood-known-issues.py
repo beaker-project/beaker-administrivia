@@ -102,6 +102,10 @@ known_issues = [
         ],
     ),
     KnownIssue(
+        description='NoSuchElementException in test_system_export_reimport',
+        failure_patterns=[rb'test_system_export_reimport.*NoSuchElementException'],
+    ),
+    KnownIssue(
         description='race condition in job matrix (dataTables_scrollHeadInner)',
         failure_patterns=[rb'test_job_matrix.*NoSuchElementException.*dataTables_scrollHeadInner'],
     ),
