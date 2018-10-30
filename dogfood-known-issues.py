@@ -151,6 +151,10 @@ known_issues = [
         description='ENOMEM from fork()',
         failure_patterns=[rb'os\.fork\(\).*Cannot allocate memory'],
     ),
+    KnownIssue(
+        description='NoSuchElementException in test_secret_system',
+        failure_patterns=[rb'ERROR: test_secret_system.*NoSuchElementException'],
+    ),
 ]
 
 def all_weeks():
