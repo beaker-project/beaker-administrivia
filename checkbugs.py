@@ -126,8 +126,8 @@ class BugzillaInfo(object):
             # we might accidentally omit private bugs from the list
             if not bz.user:
                 raise RuntimeError('Configure your username in ~/.bugzillarc')
-            if bz._proxy.User.valid_cookie(dict(login=bz.user))['cookie_isvalid'] != 1:
-                raise RuntimeError('Invalid BZ credentials, try running "bugzilla login"')
+            if not bz.logged_in:
+                raise RuntimeError('Not logged into Bugzilla, try running "bugzilla login"')
         return self._bz
 
     def get_bugs(self, milestone=None, states=None, assignee=None):
