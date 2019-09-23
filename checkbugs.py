@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 """
-Just a little script to report on the status of bugs slated against a given 
+Just a little script to report on the status of bugs slated against a given
 release.
 
-Before running this, make sure that you have set your username in 
+Before running this, make sure that you have set your username in
 ~/.bugzillarc:
 
 [bugzilla.redhat.com]
@@ -15,57 +15,58 @@ and that you have obtained a Bugzilla session cookie by executing:
 $ bugzilla login
 """
 
-BUGZILLA_URL = 'https://bugzilla.redhat.com/xmlrpc.cgi'
-GERRIT_HOSTNAME = 'gerrit.beaker-project.org'
-GERRIT_SSH_PORT = 29418
-
-import sys
 import os
 import re
 import subprocess
+import sys
 from itertools import chain
-import simplejson as json
-from optparse import OptionParser
-import bugzilla # yum install python-bugzilla
+from argparse import ArgumentParser
 
-# These are in Python 2.6
-def any(iterable):
-    for x in iterable:
-        if x:
-            return True
-    return False
-def all(iterable):
-    for x in iterable:
-        if not x:
-            return False
-    return True
+import bugzilla  # yum install python-bugzilla
+import simplejson as json
+
+BUGZILLA_URL = 'https://bugzilla.redhat.com/xmlrpc.cgi'
+GERRIT_HOSTNAME = 'gerrit.beaker-project.org'
+GERRIT_SSH_PORT = 29418
 
 
 ################################################
 # CLI helpers
 ################################################
 
+def cmp(x, y):
+    """
+    Return negative if x<y, zero if x==y, positive if x>y.
+    """
+    return (x > y) - (x < y)
+
+
 def abbrev_user(user):
     if user.endswith('@redhat.com'):
         return user[:-len('@redhat.com')]
 
-problems_found = False
+
+PROBLEMS_FOUND = False
+
+
 def problem(message):
-    global problems_found
-    problems_found = True
+    global PROBLEMS_FOUND
+    PROBLEMS_FOUND = True
     if os.isatty(sys.stdout.fileno()):
-        print '\033[1m\033[91m** %s\033[0m' % message
+        print('\033[1m\033[91m** %s\033[0m' % message)
     else:
-        print '** %s' % message
+        print('** %s' % message)
+
 
 def confirm(prompt):
-    return raw_input(prompt + " (y/N)?:").lower().startswith('y')
+    return input(prompt + " (y/N)?:").lower().startswith('y')
+
 
 ################################################
 # Version numbering helpers
 ################################################
 
-# Historically Beaker's version numbers have not been so simple/regular, but 
+# Historically Beaker's version numbers have not been so simple/regular, but
 # these days they are always 'x.y' where x and y are integers,
 # possibly with 'rcN' appended.
 
@@ -80,6 +81,7 @@ def next_develop(version):
     else:
         return '%s.%s' % (major + 1, 0)
 
+
 def next_maintenance(version):
     m = re.match(r'(\d+)\.(\d+)(rc\d+)?$', version)
     major = int(m.group(1))
@@ -87,10 +89,12 @@ def next_maintenance(version):
     # There is normally no release candidates on maintenance branches
     return '%s.%s' % (major, minor + 1)
 
+
 def vercmp(left, right):
     return cmp(
-            [int(piece) for piece in left.split('.')],
-            [int(piece) for piece in right.split('.')])
+        [int(piece) for piece in left.split('.')],
+        [int(piece) for piece in right.split('.')])
+
 
 ################################################
 # Bugzilla access
@@ -108,9 +112,11 @@ _status_order = [
 ]
 _status_keys = dict((v, str(k)) for k, v in enumerate(_status_order))
 
+
 def bug_sort_key(bug):
     status_key = _status_keys.get(bug.status, bug.status)
     return status_key, bug.assigned_to, bug.bug_id
+
 
 class BugzillaInfo(object):
 
@@ -131,7 +137,7 @@ class BugzillaInfo(object):
         return self._bz
 
     def get_bugs(self, milestone=None, states=None, assignee=None):
-        bz = self.get_bz_proxy()
+        bz_proxy = self.get_bz_proxy()
         criteria = {'product': 'Beaker'}
         if milestone:
             criteria['target_milestone'] = milestone
@@ -139,7 +145,7 @@ class BugzillaInfo(object):
             criteria['status'] = list(states)
         if assignee:
             criteria['assigned_to'] = assignee
-        bugs = bz.query(bz.build_query(**criteria))
+        bugs = bz_proxy.query(bz_proxy.build_query(**criteria))
         for bug in bugs:
             self._bz_cache[bug.bug_id] = bug
         return sorted(bugs, key=bug_sort_key)
@@ -148,32 +154,34 @@ class BugzillaInfo(object):
         try:
             return self._bz_cache[bug_id]
         except KeyError:
-            bz = self.get_bz_proxy()
+            bz_proxy = self.get_bz_proxy()
             criteria = {'bug_id': bug_id}
-            result = bz.query(bz.build_query(**criteria))
+            result = bz_proxy.query(bz_proxy.build_query(**criteria))
             if not result:
                 raise RuntimeError("No bug found with ID %r" % bug_id)
             bug = self._bz_cache[bug_id] = result[0]
             return bug
 
     def set_target_milestone(self, bug_id, target_milestone, nomail=False):
-        bz = self.get_bz_proxy()
-        updates = bz.build_update(target_milestone=target_milestone)
+        bz_proxy = self.get_bz_proxy()
+        updates = bz_proxy.build_update(target_milestone=target_milestone)
         if nomail:
             updates['nomail'] = 1
-        bz.update_bugs([bug_id], updates)
+        bz_proxy.update_bugs([bug_id], updates)
 
     def set_resolution(self, bug_id, resolution, nomail=False):
-        bz = self.get_bz_proxy()
-        updates = bz.build_update(resolution=resolution)
+        bz_proxy = self.get_bz_proxy()
+        updates = bz_proxy.build_update(resolution=resolution)
         if nomail:
             updates['nomail'] = 1
-        bz.update_bugs([bug_id], updates)
+        bz_proxy.update_bugs([bug_id], updates)
+
 
 # Simple module level API for the default Bugzilla URL
 bz_info = BugzillaInfo()
 get_bugs = bz_info.get_bugs
 get_bug = bz_info.get_bug
+
 
 ################################################
 # Gerrit access
@@ -182,16 +190,16 @@ get_bug = bz_info.get_bug
 class GerritInfo(object):
 
     def __init__(self, host=GERRIT_HOSTNAME, port=GERRIT_SSH_PORT):
-        self.host = GERRIT_HOSTNAME
-        self.port = str(GERRIT_SSH_PORT)
+        self.host = host
+        self.port = str(port)
 
     def get_gerrit_changes(self, bug_ids):
         p = subprocess.Popen(['ssh',
-                '-o', 'StrictHostKeyChecking=no', # work around ssh bug on RHEL5
-                '-p', self.port, self.host,
-                'gerrit', 'query', '--format=json', '--current-patch-set',
-                ' OR '.join('bug:%d' % bug_id for bug_id in bug_ids)],
-                stdout=subprocess.PIPE)
+                              '-o', 'StrictHostKeyChecking=no',  # work around ssh bug on RHEL5
+                              '-p', self.port, self.host,
+                              'gerrit', 'query', '--format=json', '--current-patch-set',
+                              ' OR '.join('bug:%d' % bug_id for bug_id in bug_ids)],
+                             stdout=subprocess.PIPE)
         stdout, _ = p.communicate()
         assert p.returncode == 0, p.returncode
         retval = []
@@ -207,17 +215,18 @@ class GerritInfo(object):
 _gerrit_info = GerritInfo()
 get_gerrit_changes = _gerrit_info.get_gerrit_changes
 
+
 def changes_for_bug(changes, bug_id):
     for change in changes:
         change_bugs = [int(t['id']) for t in change['trackingIds'] if t['system'] == 'Bugzilla']
         if bug_id in change_bugs:
             yield change
 
+
 ################################################
 # Local git query
 ################################################
 
-# TODO: switch this to dulwich?
 class GitInfo(object):
 
     def __init__(self):
@@ -226,11 +235,10 @@ class GitInfo(object):
     def _git_call(self, *args):
         command = ['git']
         command.extend(args)
-        p = subprocess.Popen(command, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if p.returncode != 0:
-            raise RuntimeError("Git call failed: %s" % stderr)
+            raise RuntimeError(f"Git call failed: {stderr.decode()}")
         return stdout
 
     def build_git_revlist(self):
@@ -245,6 +253,7 @@ class GitInfo(object):
         return sha in self._revlist
 
     _bug_footer_pattern = re.compile(r'Bug:.*?(\d+)', re.I)
+
     def bugs_referenced_in_commits(self):
         """
         Returns a list of bug IDs mentioned in all commits from master to HEAD.
@@ -258,15 +267,17 @@ class GitInfo(object):
         return bug_ids
 
     def current_git_branch(self):
-        remote_ref_name = self._git_call('name-rev', '--refs=refs/remotes/origin/*', '--name-only', 'HEAD').strip()
-        # Output will be either 'remotes/origin/release-22' or 
+        remote_ref_name = self._git_call('name-rev', '--refs=refs/remotes/origin/*', '--name-only',
+                                         'HEAD').strip()
+        # Output will be either 'remotes/origin/release-22' or
         # 'origin/release-22' depending on git version...
-        return remote_ref_name.split('/')[-1]
+        return remote_ref_name.split(b'/')[-1]
 
     def current_version(self):
         tag = self._git_call('describe', '--abbrev=0', 'HEAD').strip()
         assert tag.startswith('beaker-')
         return tag[len('beaker-'):]
+
 
 # Simple module level API for a git repo in the current working dir
 _git_info = GitInfo()
@@ -290,89 +301,97 @@ current_version = _git_info.current_version
 #  - filters based on the target milestone in Bugzilla
 
 def get_default_milestone():
-    # Figure out what milestone we are interested based on the version 
+    # Figure out what milestone we are interested based on the version
     # currently checked out.
-    # If we are on a release branch, we are working on x.y+1 (for example, 
+    # If we are on a release branch, we are working on x.y+1 (for example,
     # release-22 branch with version 22.3 means we are interested in 22.4).
-    # For all other branches, including develop, we are working on x+1.0 (for 
-    # example, develop branch with version 22.3 means we are interested in 
+    # For all other branches, including develop, we are working on x+1.0 (for
+    # example, develop branch with version 22.3 means we are interested in
     # 23.0).
-    if current_git_branch().startswith('release-'):
+    if current_git_branch().startswith(b'release-'):
         return next_maintenance(current_version())
-    else:
-        return next_develop(current_version())
+    return next_develop(current_version())
 
-# These are the names of long-lived feature branches which are abandoned and/or 
-# rebased and/or cherry-picked. That is, these are *not expected* to be merged 
+
+# These are the names of long-lived feature branches which are abandoned and/or
+# rebased and/or cherry-picked. That is, these are *not expected* to be merged
 # into HEAD.
-# This is important because if we find a Gerrit patch set which was destined 
-# for one of these branches, we *won't* complain if the commit is not 
+# This is important because if we find a Gerrit patch set which was destined
+# for one of these branches, we *won't* complain if the commit is not
 # reachable, because it's not expected to be.
-abandoned_feature_branches = [
+ABANDONED_FEATURE_BRANCHES = [
     'results-reporting-improvements',
     'results-reporting-improvements-take2',
 ]
 
+
 def main():
-    parser = OptionParser('usage: %prog [options]',
-            description='Reports on the state of Beaker bugs for a given milestone')
-    parser.add_option('-m', '--milestone', metavar='MILESTONE',
-            help='Check bugs slated for MILESTONE [default: guess from current checkout]')
-    parser.add_option('-i', '--include', metavar='STATE', action="append",
-            help='Include bugs in the specified state '
-                 '(may be given multiple times)')
-    parser.add_option('-q', '--quiet', action="store_false",
-            dest="verbose", default=True,
-            help='Only display problem reports')
-    options, args = parser.parse_args()
+    parser = ArgumentParser('usage: %prog [options]',
+                            description='Reports on the state of Beaker bugs for a given milestone')
+    parser.add_argument('-m', '--milestone', metavar='MILESTONE',
+                        help='Check bugs slated for MILESTONE '
+                             '[default: guess from current checkout]')
+    parser.add_argument('-i', '--include', metavar='STATE', action="append",
+                        help='Include bugs in the specified state '
+                             '(may be given multiple times)')
+    parser.add_argument('-q', '--quiet', action="store_false",
+                        dest="verbose", default=True,
+                        help='Only display problem reports')
+    options = parser.parse_args()
+    print(options)
     if not options.milestone:
         options.milestone = get_default_milestone()
-        print "Using milestone %s" % options.milestone
+        print("Using milestone %s" % options.milestone)
 
     if options.verbose:
-        print "Building git revision list for HEAD"
+        print("Building git revision list for HEAD")
     build_git_revlist()
     if options.verbose:
-        print "Retrieving bug list from Bugzilla"
+        print("Retrieving bug list from Bugzilla")
     bugs = get_bugs(milestone=options.milestone, states=options.include)
     bug_ids = set(bug.bug_id for bug in bugs)
     if options.verbose:
-        print "  Retrieved %d bugs" % len(bugs)
+        print("  Retrieved %d bugs" % len(bugs))
     if not bug_ids:
-        print "No bugs to check. Bye Bye"
+        print("No bugs to check. Bye Bye")
         return
 
     if options.verbose:
-        print "Retrieving code review details from Gerrit"
+        print("Retrieving code review details from Gerrit")
     changes = get_gerrit_changes(bug_ids)
     if options.verbose:
-        print "  Retrieved %d patch reviews" % len(changes)
+        print("  Retrieved %d patch reviews" % len(changes))
 
     # Consistency check on all bugs in the specified milestone
     for bug in bugs:
         if options.verbose:
-            print 'Bug %-13d %-17s %-10s <%s>' % (bug.bug_id, bug.bug_status,
-                    abbrev_user(bug.assigned_to), bug.weburl)
+            print('Bug %-13d %-17s %-10s <%s>' % (bug.bug_id, bug.bug_status,
+                                                  abbrev_user(bug.assigned_to), bug.weburl))
         bug_changes = list(changes_for_bug(changes, bug.bug_id))
 
         # print out summary of changes
         for change in sorted(bug_changes, key=lambda c: int(c['number'])):
             patch_set = change['currentPatchSet']
             verified = max(chain([None], (int(a['value'])
-                    for a in patch_set.get('approvals', []) if a['type'] == 'Verified'))) or 0
+                                          for a in patch_set.get('approvals', []) if
+                                          a['type'] == 'Verified'))) or 0
             reviewed = max(chain([None], (int(a['value'])
-                    for a in patch_set.get('approvals', []) if a['type'] == 'Code-Review'))) or 0
+                                          for a in patch_set.get('approvals', []) if
+                                          a['type'] == 'Code-Review'))) or 0
             if options.verbose:
-                print '    Change %-6s %-17s %-10s <%s>' % (change['number'],
-                        '%s (%d/%d)' % (change['status'], verified, reviewed),
-                        change['owner']['username'], change['url'])
+                print('    Change %-6s %-17s %-10s <%s>' % (change['number'],
+                                                            '%s (%d/%d)' % (
+                                                                change['status'], verified,
+                                                                reviewed),
+                                                            change['owner']['username'],
+                                                            change['url']))
 
         # check for patch state inconsistencies
         unabandoned_bug_changes = [change for change in bug_changes
-                if change['status'] != 'ABANDONED']
+                                   if change['status'] != 'ABANDONED']
         if not unabandoned_bug_changes:
             # No patches exist, or they're all abandoned.
-            # We accept closed states here because the bug might have been 
+            # We accept closed states here because the bug might have been
             # fixed by something other than a Beaker patch (like a beah patch, etc).
             acceptable_bug_states = ['NEW', 'ASSIGNED', 'ON_QA', 'VERIFIED', 'CLOSED']
         elif any(change['status'] != 'MERGED' for change in unabandoned_bug_changes):
@@ -395,32 +414,32 @@ def main():
         # Check merge consistency
         for change in bug_changes:
             if change['status'] == 'MERGED' and change['project'] == 'beaker' and \
-                    change['branch'] not in abandoned_feature_branches:
+                    change['branch'] not in ABANDONED_FEATURE_BRANCHES:
                 sha = change['currentPatchSet']['revision']
                 if not git_commit_reachable(sha):
                     problem('Bug %s: Commit %s is not reachable from HEAD '
                             ' (is this clone up to date?)' % (bug.bug_id, sha))
 
         if options.verbose:
-            print
+            print('\n')
 
     # Check for commits which reference a bug not in this milestone
     if not options.include:
         if options.verbose:
-            print "Checking commit bug references for consistency"
+            print("Checking commit bug references for consistency")
         for referenced_bug_id in bugs_referenced_in_commits():
             if referenced_bug_id not in bug_ids:
                 referenced_bug = get_bug(referenced_bug_id)
-                # If the bug had a patch merged, but then reverted, we can put 
-                # "Reverted" into the devel whiteboard to keep checkbugs from 
+                # If the bug had a patch merged, but then reverted, we can put
+                # "Reverted" into the devel whiteboard to keep checkbugs from
                 # getting upset about it.
                 if 'Reverted' in referenced_bug.devel_whiteboard.split():
                     continue
-                # We have found a patch referencing a bug which is not in our 
-                # milestone. It could be a merge/cherry-pick of a bug which is 
-                # already fixed in some release, or on the maintenance branch: 
+                # We have found a patch referencing a bug which is not in our
+                # milestone. It could be a merge/cherry-pick of a bug which is
+                # already fixed in some release, or on the maintenance branch:
                 # those are not a problem.
-                # Only raise the alarm if the referenced bug's milestone is 
+                # Only raise the alarm if the referenced bug's milestone is
                 # newer or not set.
                 if (referenced_bug.target_milestone == '---' or
                         referenced_bug.target_milestone == 'future_maint' or
@@ -432,7 +451,7 @@ def main():
     # Check for bugs with a missing milestone setting
     if not options.include:
         if options.verbose:
-            print "Checking milestone and bug status consistency"
+            print("Checking milestone and bug status consistency")
         # In progress bugs should always have a milestone
         _in_work_states = [
             'MODIFIED',
@@ -443,9 +462,9 @@ def main():
         in_work_bugs = get_bugs(milestone=['---', 'future_maint'], states=_in_work_states)
         for no_milestone in in_work_bugs:
             problem('Bug %s status is %s but target milestone is not set' %
-                            (no_milestone.bug_id, no_milestone.bug_status))
+                    (no_milestone.bug_id, no_milestone.bug_status))
 
 
 if __name__ == '__main__':
     main()
-    sys.exit(1 if problems_found else 0)
+    sys.exit(1 if PROBLEMS_FOUND else 0)
